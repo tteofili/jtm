@@ -104,7 +104,7 @@ public class JiraIssue {
   }
 
   public String asString() {
-    return Joiner.on(' ').join(title, description, summary, comments, labels);
+    return Joiner.on(' ').join(labels, title, description, summary, comments);
   }
 
   @Override

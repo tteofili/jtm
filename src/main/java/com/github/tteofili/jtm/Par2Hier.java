@@ -57,6 +57,7 @@ public class Par2Hier extends ParagraphVectors {
     this.lookupTable = rebuildLookupTable(paragraphVectors.lookupTable(), this.vocab);
 
     this.tokenizerFactory = paragraphVectors.getTokenizerFactory();
+    this.modelUtils = paragraphVectors.getModelUtils();
 
   }
 
@@ -364,6 +365,11 @@ public class Par2Hier extends ParagraphVectors {
     }
 
     return Nd4j.pullRows(lookupTable.getWeights(), 1, indexes);
+  }
+
+  @Override
+  public Collection<String> wordsNearest(INDArray words, int top) {
+    return modelUtils.wordsNearest(words, top);
   }
 
 }

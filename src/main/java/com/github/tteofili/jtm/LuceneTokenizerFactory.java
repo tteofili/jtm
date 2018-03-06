@@ -3,7 +3,6 @@ package com.github.tteofili.jtm;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -11,10 +10,6 @@ import java.util.List;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
-import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
-import org.apache.lucene.analysis.tokenattributes.TypeAttribute;
-import org.apache.lucene.util.AttributeSource;
 import org.apache.lucene.util.IOUtils;
 import org.deeplearning4j.text.tokenization.tokenizer.TokenPreProcess;
 import org.deeplearning4j.text.tokenization.tokenizer.Tokenizer;
@@ -25,9 +20,9 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
  */
 public class LuceneTokenizerFactory implements TokenizerFactory {
 
-  private final org.apache.lucene.analysis.Analyzer analyzer;
+  private final Analyzer analyzer;
 
-  LuceneTokenizerFactory(org.apache.lucene.analysis.Analyzer analyzer) {
+  LuceneTokenizerFactory(Analyzer analyzer) {
     this.analyzer = analyzer;
   }
 
@@ -66,13 +61,12 @@ public class LuceneTokenizerFactory implements TokenizerFactory {
         }
         tokenStream.end();
       } catch (IOException ioe) {
-        throw new RuntimeException("Error occured while iterating over tokenstream", ioe);
+        throw new RuntimeException("Error occurred while iterating over tokenstream", ioe);
       } finally {
         IOUtils.closeWhileHandlingException(tokenStream);
       }
 
       iterator = tokens.iterator();
-
     }
 
     LuceneTokenizer(Analyzer analyzer, InputStream toTokenize) {

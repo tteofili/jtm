@@ -10,15 +10,16 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <lucene.version>7.2.1</lucene.version>
+        <lucene.version>8.0.0-SNAPSHOT</lucene.version>
         <dl4j.version>0.9.1</dl4j.version>
         <opennlp.version>1.8.4</opennlp.version>
+        <flink.version>1.3.1</flink.version>
     </properties>
     <dependencies>
         <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-app</artifactId>
-            <version>1.12</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.12</version>
         </dependency>
         <dependency>
             <groupId>org.apache.opennlp</groupId>
@@ -28,7 +29,7 @@
         <dependency>
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-core</artifactId>
-            <version>1.3.1</version>
+            <version>${flink.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -38,12 +39,12 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-misc</artifactId>
+            <artifactId>lucene-analyzers-opennlp</artifactId>
             <version>${lucene.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-classification</artifactId>
+            <artifactId>lucene-misc</artifactId>
             <version>${lucene.version}</version>
         </dependency>
         <dependency>
@@ -51,11 +52,11 @@
             <artifactId>lucene-core</artifactId>
             <version>${lucene.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.apache.lucene</groupId>-->
+            <!--<artifactId>lucene-analyzers-common</artifactId>-->
+            <!--<version>${lucene.version}</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>org.deeplearning4j</groupId>
             <artifactId>deeplearning4j-nlp</artifactId>
@@ -77,6 +78,7 @@
             <artifactId>commons-collections4</artifactId>
             <version>4.1</version>
         </dependency>
+
     </dependencies>
     <build>
         <plugins>
@@ -93,6 +95,27 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>appassembler-maven-plugin</artifactId>
+                <version>1.1.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>assemble</goal>
+                        </goals>
+                        <configuration>
+                            <programs>
+                                <program>
+                                    <mainClass>com.github.tteofili.jtm.JiraAnalysisTool</mainClass>
+                                    <name>jtm</name>
+                                </program>
+                            </programs>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

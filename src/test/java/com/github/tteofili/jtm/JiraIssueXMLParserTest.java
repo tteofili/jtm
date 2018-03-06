@@ -13,7 +13,7 @@ public class JiraIssueXMLParserTest {
 
   @Test
   public void testParse() throws Exception {
-    JiraIssueXMLParser parser = new JiraIssueXMLParser("src/test/resources/issues.xml");
+    JiraIssueXMLParser parser = new JiraIssueXMLParser("src/test/resources/opennlp-issues.xml");
     final Map<String, JiraIssue> issues = parser.parse();
     assertEquals(1000, issues.size());
   }
