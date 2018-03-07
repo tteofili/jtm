@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 Tommaso Teofili
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.github.tteofili.jtm;
 
 import java.util.ArrayList;
@@ -28,11 +43,10 @@ import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.ops.transforms.Transforms;
 
 /**
- * Basic Par2Hier implementation for DL4j, as wrapper over SequenceVectors
+ * Simplified version of Par2Hier implementation for DL4j for {@link JiraIssue}s
  *
  */
 public class Par2Hier extends ParagraphVectors {
-  //  private  WeightLookupTable<VocabWord> pvTable;
   @Getter
   protected LabelsSource labelsSource;
   @Getter
@@ -58,6 +72,10 @@ public class Par2Hier extends ParagraphVectors {
 
     this.tokenizerFactory = paragraphVectors.getTokenizerFactory();
     this.modelUtils = paragraphVectors.getModelUtils();
+
+  }
+
+  public Par2Hier(ParagraphVectors issuesParagraphVectors, ParagraphVectors commentsParagraphVectors, Par2HierUtils.Method cluster, int k) {
 
   }
 

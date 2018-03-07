@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 Tommaso Teofili
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.github.tteofili.jtm;
 
 import java.io.File;
@@ -10,7 +25,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 /**
- *
+ * Tests for {@link JiraAnalysisTool}
  */
 @RunWith(Parameterized.class)
 public class JiraAnalysisToolTest {
@@ -38,9 +53,9 @@ public class JiraAnalysisToolTest {
   public static Collection<Object[]> data() {
     // resource, epochs, layerSize, clusterCount, maxIterationCount, distanceFunction, topN
     return Arrays.asList(new Object[][] {
-        {"/opennlp-issues.xml", "1", "50", "10", "5", "cosinesimilarity", "3"},
-        {"/lucene-issues.xml", "1", "50", "10", "5", "cosinesimilarity", "3"},
-        {"/oak-issues.xml", "1", "50", "10", "5", "cosinesimilarity", "3"},
+        {"/opennlp-issues.xml", "5", "200", "10", "5", "cosinesimilarity", "5"},
+        {"/lucene-issues.xml", "5", "200", "10", "5", "cosinesimilarity", "5"},
+        {"/oak-issues.xml", "5", "200", "10", "5", "cosinesimilarity", "5"},
     });
   }
 
