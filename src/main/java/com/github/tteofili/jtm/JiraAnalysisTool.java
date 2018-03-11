@@ -32,7 +32,6 @@ import org.apache.lucene.analysis.custom.CustomAnalyzer;
 import org.apache.lucene.analysis.pattern.PatternReplaceFilterFactory;
 import org.apache.lucene.analysis.standard.ClassicTokenizerFactory;
 import org.deeplearning4j.models.embeddings.learning.impl.elements.SkipGram;
-import org.deeplearning4j.models.embeddings.learning.impl.sequence.DM;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
@@ -63,6 +62,9 @@ public class JiraAnalysisTool {
     int maxIterationCount = Integer.parseInt(readFrom(args, 4));
     String distanceFunction = readFrom(args, 5);
     int topN = Integer.parseInt(readFrom(args, 6));
+    boolean hierarchicalVectors = Boolean.parseBoolean(readFrom(args, 7));
+    boolean includeComments = Boolean.parseBoolean(readFrom(args, 8));
+    String index = readFrom(args, 9);
 
     Arrays.sort(stopTags);
     InputStream posStream = JiraAnalysisTool.class.getResourceAsStream("/en-pos-maxent.bin");
@@ -76,7 +78,7 @@ public class JiraAnalysisTool {
 
     log.info("{} issues parsed", issues.size());
 
-    JiraIterator iterator = new JiraIterator(issues, true);
+    JiraIterator iterator = new JiraIterator(issues, includeComments);
 
 //    String sentenceModel = "en-sent.bin";
 //    String tokenizerModel = "en-token.bin";
@@ -114,7 +116,6 @@ public class JiraAnalysisTool {
 
     ParagraphVectors issuesParagraphVectors = new ParagraphVectors.Builder()
         .iterate(iterator)
-        .sequenceLearningAlgorithm(new DM<>())
         .epochs(epochs)
         .layerSize(layerSize)
         .tokenizerFactory(tf)
@@ -144,14 +145,23 @@ public class JiraAnalysisTool {
 //    issuesParagraphVectors.fit();
 
 
-//    Par2Hier par2Hier = new Par2Hier(issuesParagraphVectors, Par2HierUtils.Method.CLUSTER, 4);
-//    par2Hier.fit();
+    ParagraphVectors paragraphVectors;
+    if (hierarchicalVectors) {
+      Par2Hier par2Hier = new Par2Hier(issuesParagraphVectors, Par2HierUtils.Method.SUM, 3);
+      par2Hier.fit();
+      paragraphVectors = par2Hier;
+    } else {
+      paragraphVectors = issuesParagraphVectors;
+    }
 
     for (Map.Entry<String, JiraIssue> entry : issues.entrySet()) {
       JiraIssue issue = entry.getValue();
-      Collection<String> topics = getTopics(topN, issues, issuesWord2vec, issuesParagraphVectors, issue, tagger);
-      issue.getLabels().addAll(topics);
-      log.info("{} : {}", issue.getTitle(), issue.getLabels());
+      Collection<String> topics = getTopics(topN, issues, issuesWord2vec, paragraphVectors, issue, tagger);
+      issue.addTopics(topics);
+      log.info("{} : {}", issue.getTitle(), topics);
+      if (index != null) {
+        // TODO : indexing
+      }
     }
 
 //    KMeansClustering kMeansClustering = KMeansClustering.setup(clusterCount, maxIterationCount, distanceFunction);
@@ -217,15 +227,15 @@ public class JiraAnalysisTool {
 
   }
 
-  private static Collection<String> getTopics(int topN, Map<String, JiraIssue> issues, Word2Vec issuesWord2vec, ParagraphVectors issuesParagraphVectors, JiraIssue issue, POSTaggerME tagger) {
-    INDArray issueVector = issuesParagraphVectors.getLookupTable().vector(issue.getId());
+  private static Collection<String> getTopics(int topN, Map<String, JiraIssue> issues, Word2Vec issuesWord2vec, ParagraphVectors paragraphVectors, JiraIssue issue, POSTaggerME tagger) {
+    INDArray issueVector = paragraphVectors.getLookupTable().vector(issue.getId());
     Collection<String> nearestWords = issuesWord2vec.wordsNearest(issueVector, topN);
 
     log.debug("issue {} : {}", issue.getTitle(), nearestWords);
 
     Collection<String> nearestLabelsWords = new LinkedList<>();
-    for (String label : issuesParagraphVectors.nearestLabels(issueVector, topN)) {
-      INDArray nearestIssueVector = issuesParagraphVectors.getLookupTable().vector(label);
+    for (String label : paragraphVectors.nearestLabels(issueVector, topN)) {
+      INDArray nearestIssueVector = paragraphVectors.getLookupTable().vector(label);
       nearestLabelsWords.addAll(issuesWord2vec.wordsNearest(nearestIssueVector, topN));
     }
 
@@ -238,11 +248,10 @@ public class JiraAnalysisTool {
 
     Collection<String> toRemove = new LinkedList<>();
     for (String t : topics) {
-      String key = t.toUpperCase();
       String[] tags = tagger.tag(new String[] {t});
       String tag = tags[0];
       boolean stopTag = Arrays.binarySearch(stopTags, tag) >= 0;
-      if (stopTag || issues.containsKey(key) || StringUtils.isNumeric(t)) {
+      if (stopTag || issues.containsKey(t.toUpperCase()) || issues.containsKey(t) || StringUtils.isNumeric(t)) {
         toRemove.add(t);
       }
     }
@@ -254,7 +263,7 @@ public class JiraAnalysisTool {
   }
 
   private static String readFrom(String[] args, int i) {
-    // resource, epochs, layerSize, clusterCount, maxIterationCount, distanceFunction, topN
+    // resource, epochs, layerSize, clusterCount, maxIterationCount, distanceFunction, topN, hierarchical vectors, include comments, index
     if (args != null && args.length > i) {
       return args[i];
     } else {
@@ -262,9 +271,9 @@ public class JiraAnalysisTool {
       if (i == 0) {
         defaultString = "src/test/resources/opennlp-issues.xml";
       } else if (i == 1) {
-        defaultString = "3";
+        defaultString = "5";
       } else if (i == 2) {
-        defaultString = "100";
+        defaultString = "200";
       } else if (i == 3) {
         defaultString = "30";
       } else if (i == 4) {
@@ -272,7 +281,13 @@ public class JiraAnalysisTool {
       } else if (i == 5) {
         defaultString = "cosinesimilarity";
       } else if (i == 6) {
-        defaultString = "7";
+        defaultString = "5";
+      } else if (i == 7) {
+        defaultString = "false";
+      } else if (i == 8) {
+        defaultString = "true";
+      } else if (i == 9) {
+        defaultString = null;
       } else {
         throw new RuntimeException("unexpected index " + i + "with args " + Arrays.toString(args));
       }

@@ -390,4 +390,8 @@ public class Par2Hier extends ParagraphVectors {
     return modelUtils.wordsNearest(words, top);
   }
 
+  @Override
+  public WeightLookupTable<VocabWord> getLookupTable() {
+    return this.lookupTable;
+  }
 }

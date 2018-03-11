@@ -58,7 +58,7 @@ public class JiraIssueXMLParser {
   private final XMLInputFactory factory = XMLInputFactory.newInstance();
   private final Map<String, JiraIssue> issues;
 
-  JiraIssueXMLParser(final String file) {
+  public JiraIssueXMLParser(final String file) {
     this.file = file;
     this.issues = new HashMap<>();
   }
@@ -98,8 +98,10 @@ public class JiraIssueXMLParser {
     while (reader.hasNext()) {
       final XMLEvent event = reader.nextEvent();
       if (event.isEndElement() && event.asEndElement().getName().getLocalPart().equals(ELEMENT_ITEM)) {
-        final JiraIssue issue = new JiraIssue(title, link, projectId, description, id, summary, type, reporter, assignee, resolution, labels, created, updated, component, comments);
-        issues.put(id, issue);
+        if (id != null) {
+          final JiraIssue issue = new JiraIssue(title, link, projectId, description, id, summary, type, reporter, assignee, resolution, labels, created, updated, component, comments);
+          issues.put(id, issue);
+        }
         return;
       }
       if (event.isStartElement()) {

@@ -15,6 +15,8 @@
  */
 package com.github.tteofili.jtm;
 
+import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.google.common.base.Joiner;
@@ -35,6 +37,7 @@ public class JiraIssue {
   private final String assignee;
   private final String resolution;
   private final List<String> labels;
+  private final List<String> topics;
   private final String created;
   private final String updated;
   private final String component;
@@ -56,6 +59,7 @@ public class JiraIssue {
     this.updated = updated;
     this.component = component;
     this.comments = comments;
+    topics = new LinkedList<>();
   }
 
   public String getTitle() {
@@ -118,9 +122,19 @@ public class JiraIssue {
     return comments;
   }
 
+  public List<String> getTopics() {
+    return topics;
+  }
+
+  public void addTopics(Collection<String> topic) {
+    topics.addAll(topic);
+  }
+
   public String asString() {
     return Joiner.on(' ').join(labels, title, description, summary);
   }
+
+
 
   @Override
   public String toString() {
