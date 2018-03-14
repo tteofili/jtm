@@ -10,13 +10,18 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <lucene.version>8.0.0-SNAPSHOT</lucene.version>
+        <lucene.version>7.2.1</lucene.version>
         <dl4j.version>0.9.1</dl4j.version>
         <opennlp.version>1.8.4</opennlp.version>
         <flink.version>1.3.2</flink.version>
         <scala.version>2.11</scala.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>x-pack-transport</artifactId>
+            <version>6.2.2</version>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
@@ -48,11 +53,11 @@
             <version>${lucene.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-opennlp</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>org.apache.lucene</groupId>-->
+            <!--<artifactId>lucene-analyzers-opennlp</artifactId>-->
+            <!--<version>${lucene.version}</version>-->
+        <!--</dependency>-->
         <dependency>
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-misc</artifactId>
@@ -93,16 +98,6 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-collections4</artifactId>
             <version>4.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>transport</artifactId>
-            <version>6.2.2</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.mahout</groupId>
-            <artifactId>mahout-integration</artifactId>
-            <version>0.13.0-SNAPSHOT</version>
         </dependency>
 
     </dependencies>
@@ -145,6 +140,19 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <!-- elasticsearch repo -->
+        <repository>
+            <id>elasticsearch-releases</id>
+            <url>https://artifacts.elastic.co/maven</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
 </project>
 

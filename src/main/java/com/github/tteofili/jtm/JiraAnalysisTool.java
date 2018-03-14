@@ -17,6 +17,7 @@ package com.github.tteofili.jtm;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -35,6 +36,16 @@ import org.deeplearning4j.models.embeddings.learning.impl.elements.SkipGram;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
+import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.TransportAddress;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryAction;
+import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,13 +69,10 @@ public class JiraAnalysisTool {
     String pathToJiraExport = readFrom(args, 0);
     int epochs = Integer.parseInt(readFrom(args, 1));
     int layerSize = Integer.parseInt(readFrom(args, 2));
-    int clusterCount = Integer.parseInt(readFrom(args, 3));
-    int maxIterationCount = Integer.parseInt(readFrom(args, 4));
-    String distanceFunction = readFrom(args, 5);
-    int topN = Integer.parseInt(readFrom(args, 6));
-    boolean hierarchicalVectors = Boolean.parseBoolean(readFrom(args, 7));
-    boolean includeComments = Boolean.parseBoolean(readFrom(args, 8));
-    String index = readFrom(args, 9);
+    int topN = Integer.parseInt(readFrom(args, 3));
+    boolean hierarchicalVectors = Boolean.parseBoolean(readFrom(args, 4));
+    boolean includeComments = Boolean.parseBoolean(readFrom(args, 5));
+    boolean index = Boolean.parseBoolean(readFrom(args, 6));
 
     Arrays.sort(stopTags);
     InputStream posStream = JiraAnalysisTool.class.getResourceAsStream("/en-pos-maxent.bin");
@@ -125,26 +133,6 @@ public class JiraAnalysisTool {
 
     iterator.reset();
 
-//    Word2Vec commentsWord2vec = new Word2Vec.Builder()
-//        .iterate(iterator.commentsIterator())
-//        .epochs(epochs)
-//        .elementsLearningAlgorithm(new SkipGram<>())
-//        .layerSize(layerSize)
-//        .tokenizerFactory(tf)
-//        .build();
-//    issuesWord2vec.fit();
-//
-//    ParagraphVectors commentsParagraphVectors = new ParagraphVectors.Builder()
-//        .iterate(iterator.commentsIterator())
-//        .sequenceLearningAlgorithm(new DM<>())
-//        .epochs(epochs)
-//        .layerSize(layerSize)
-//        .tokenizerFactory(tf)
-//        .useExistingWordVectors(commentsWord2vec)
-//        .build();
-//    issuesParagraphVectors.fit();
-
-
     ParagraphVectors paragraphVectors;
     if (hierarchicalVectors) {
       Par2Hier par2Hier = new Par2Hier(issuesParagraphVectors, Par2HierUtils.Method.SUM, 3);
@@ -159,72 +147,64 @@ public class JiraAnalysisTool {
       Collection<String> topics = getTopics(topN, issues, issuesWord2vec, paragraphVectors, issue, tagger);
       issue.addTopics(topics);
       log.info("{} : {}", issue.getTitle(), topics);
-      if (index != null) {
-        // TODO : indexing
-      }
     }
 
-//    KMeansClustering kMeansClustering = KMeansClustering.setup(clusterCount, maxIterationCount, distanceFunction);
-//
-//    List<Point> points = Point.toPoints(paragraphVectors.lookupTable().getWeights());
-//    ClusterSet clusterSet = kMeansClustering.applyTo(points);
-//
-//    for (Cluster c : clusterSet.getClusters()) {
-//      INDArray center = c.getCenter().getArray();
-//      Collection<String> strings = word2Vec.wordsNearest(center, topN);
-//      c.setLabel(strings.toString());
-//      System.out.println("labels by words -> " + c.getLabel() + ", " + c.getPoints().size());
-//      Collection<String> topics = word2Vec.wordsNearestSum(word2Vec.getWordVectorsMean(strings), 1);
-//      System.out.println("topic by words -> " + topics);
-//
-//      Collection<String> labels = paragraphVectors.nearestLabels(center, topN);
-//      INDArray wordVectorsMean = paragraphVectors.getWordVectorsMean(labels);
-//      strings = word2Vec.wordsNearest(wordVectorsMean, topN);
-//      c.setLabel(strings.toString());
-//      System.out.println("labels by pv -> " + c.getLabel() + ", " + c.getPoints().size());
-//      topics = word2Vec.wordsNearestSum(word2Vec.getWordVectorsMean(strings), 1);
-//      System.out.println("topic by pv -> " + topics);
-//
-//      labels = par2Hier.nearestLabels(center, topN);
-//      wordVectorsMean = par2Hier.getWordVectorsMean(labels);
-//      strings = word2Vec.wordsNearest(wordVectorsMean, topN);
-//      c.setLabel(strings.toString());
-//      System.out.println("labels by p2h -> " + c.getLabel() + ", " + c.getPoints().size());
-//      topics = word2Vec.wordsNearestSum(word2Vec.getWordVectorsMean(strings), 1);
-//      System.out.println("topic by p2h -> " + topics);
-//    }
-//
-//    for (Cluster c : clusterSet.getClusters()) {
-//      StringBuilder builder = new StringBuilder();
-//
-//      INDArray center = c.getCenter().getArray();
-//      Collection<String> topicBySingleWord = word2Vec.wordsNearest(center, 1);
-//      double distance1 = c.getDistanceToCenter(Point.toPoints(word2Vec.getWordVectors(topicBySingleWord)).get(0));
-//      builder.append(topicBySingleWord).append('(').append(distance1).append(')').append(',');
-//
-//      Collection<String> nearestWords = word2Vec.wordsNearest(center, topN);
-//      INDArray wordVectorsMean = word2Vec.getWordVectorsMean(nearestWords);
-//      Collection<String> topicByAverageWords = word2Vec.wordsNearest(wordVectorsMean, 1);
-//      double distance2 = c.getDistanceToCenter(Point.toPoints(wordVectorsMean).get(0));
-//      builder.append(topicByAverageWords).append('(').append(distance2).append(')').append(',');
-//
-//      Collection<String> nearestLabels = paragraphVectors.nearestLabels(center, topN);
-//      INDArray docVectorsMean = paragraphVectors.getWordVectorsMean(nearestLabels);
-//      Collection<String> nearestWordsForPV = paragraphVectors.wordsNearest(docVectorsMean, 1);
-//      double distance3 = c.getDistanceToCenter(Point.toPoints(docVectorsMean).get(0));
-//      builder.append(nearestWordsForPV).append('(').append(distance3).append(')').append(',');
-//
-//      Collection<String> nearestLabelsP2H = par2Hier.nearestLabels(center, topN);
-//      INDArray docVectorsMeanP2H = par2Hier.getWordVectorsMean(nearestLabelsP2H);
-//      Collection<String> nearestWordsForP2H = par2Hier.wordsNearest(wordVectorsMean, 1);
-//      double distance4 = c.getDistanceToCenter(Point.toPoints(docVectorsMeanP2H).get(0));
-//      builder.append(nearestWordsForP2H).append('(').append(distance4).append(')');
-//
-//      c.setLabel(builder.toString());
-//      System.out.println(c.getLabel() + " - " + c.getPoints().size());
-//
-//    }
+    if (index) {
+      Settings settings = Settings.builder()
+          .put("cluster.name", "elasticsearch")
+          .put("xpack.security.user", "elastic:Q96HdxDpHMH2p9TrMvqA")
+          .build();
+      TransportClient client = new PreBuiltXPackTransportClient(settings)
+          .addTransportAddresses(new TransportAddress(InetAddress.getByName("localhost"), 9300));
 
+      String indexName = issues.values().iterator().next().getProjectId().toLowerCase();
+
+//      try {
+//        BulkByScrollResponse bulk =
+//            DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
+//                .filter(QueryBuilders.matchAllQuery())
+//                .source(indexName)
+//                .get();
+//
+//        long deleted = bulk.getDeleted();
+//        log.info("{} deletion : {}", indexName, deleted);
+//      } catch (Throwable t) {
+//        // do nothing
+//      }
+
+      String type = "doc";
+      try {
+        for (JiraIssue issue : issues.values()) {
+
+          XContentBuilder jsonBuilder = XContentFactory.jsonBuilder()
+              .startObject()
+              .field("id", issue.getId())
+              .field("assignee", issue.getAssignee())
+              .field("component", issue.getComponent())
+              .field("created", issue.getCreated())
+              .field("description", issue.getDescription())
+              .field("labels", issue.getLabels())
+              .field("link", issue.getLink())
+              .field("projectId", issue.getProjectId())
+              .field("reporter", issue.getReporter())
+              .field("resolution", issue.getResolution())
+              .field("summary", issue.getSummary())
+              .field("title", issue.getTitle())
+              .field("topics", issue.getTopics())
+              .field("typeId", issue.getTypeId())
+              .field("updated", issue.getUpdated())
+              .endObject();
+
+          IndexResponse response = client.prepareIndex(indexName, type, issue.getId())
+              .setSource(jsonBuilder)
+              .get();
+
+          log.info("indexing {} : {}", issue.getId(), response.status());
+        }
+      } finally {
+        client.close();
+      }
+    }
   }
 
   private static Collection<String> getTopics(int topN, Map<String, JiraIssue> issues, Word2Vec issuesWord2vec, ParagraphVectors paragraphVectors, JiraIssue issue, POSTaggerME tagger) {
@@ -275,19 +255,13 @@ public class JiraAnalysisTool {
       } else if (i == 2) {
         defaultString = "200";
       } else if (i == 3) {
-        defaultString = "30";
-      } else if (i == 4) {
-        defaultString = "15";
-      } else if (i == 5) {
-        defaultString = "cosinesimilarity";
-      } else if (i == 6) {
         defaultString = "5";
-      } else if (i == 7) {
+      } else if (i == 4) {
         defaultString = "false";
-      } else if (i == 8) {
+      } else if (i == 5) {
         defaultString = "true";
-      } else if (i == 9) {
-        defaultString = null;
+      } else if (i == 6) {
+        defaultString = "true";
       } else {
         throw new RuntimeException("unexpected index " + i + "with args " + Arrays.toString(args));
       }
