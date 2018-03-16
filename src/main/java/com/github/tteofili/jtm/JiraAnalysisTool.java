@@ -20,6 +20,8 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
+import java.util.Formatter;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -42,9 +44,6 @@ import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.TransportAddress;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.reindex.BulkByScrollResponse;
-import org.elasticsearch.index.reindex.DeleteByQueryAction;
 import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.slf4j.Logger;
@@ -52,34 +51,82 @@ import org.slf4j.LoggerFactory;
 
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.IVersionProvider;
+import picocli.CommandLine.Option;
 
 /**
  * Tool for analyzing Jira issues exported as XML.
  * This tool does topic modelling based on word2vec and paragraph vectors.
  *
  */
+@Command(name = "jtm", versionProvider = JiraAnalysisTool.JtmVersionProvider.class)
 public class JiraAnalysisTool {
 
   private static final Logger log = LoggerFactory.getLogger(JiraAnalysisTool.class);
 
   private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
 
-  public static void main(String[] args) throws IOException, XMLStreamException {
+  //resource, epochs, layerSize, clusterCount, maxIterationCount, distanceFunction, topN, hierarchical vectors, include comments, index
 
-    String pathToJiraExport = readFrom(args, 0);
-    int epochs = Integer.parseInt(readFrom(args, 1));
-    int layerSize = Integer.parseInt(readFrom(args, 2));
-    int topN = Integer.parseInt(readFrom(args, 3));
-    boolean hierarchicalVectors = Boolean.parseBoolean(readFrom(args, 4));
-    boolean includeComments = Boolean.parseBoolean(readFrom(args, 5));
-    boolean index = Boolean.parseBoolean(readFrom(args, 6));
+  @Option(names = { "-p", "--path" }, description = "JIRA path to be exported.", required = true)
+  private String pathToJiraExport;
+
+  @Option(names = { "-e", "--epochs" }, description = "Epochs.")
+  private int epochs = 5;
+
+  @Option(names = { "-l", "--layer-size" }, description = "Layers.")
+  private int layerSize = 200;
+
+  @Option(names = { "-t", "--top-n" }, description = "Top.")
+  private int topN = 200;
+
+  @Option(names = { "-v", "--hierarchical-vectors" }, description = "Hierarchical vectors.")
+  private boolean hierarchicalVectors = false;
+
+  @Option(names = { "-c", "--include-comments" }, description = "Include comments.")
+  private boolean includeComments = true;
+
+  @Option(names = { "-i", "--index" }, description = "Index.")
+  private boolean index = true;
+
+  @Option(names = { "-h", "--help" }, usageHelp = true, description = "display the usage message.")
+  private boolean helpRequested = false;
+
+  @Option(names = { "-V", "--version" }, versionHelp = true, description = "display version info.")
+  private boolean versionInfoRequested;
+
+  public static void main(String[] args) throws IOException, XMLStreamException {
+      JiraAnalysisTool tool = new JiraAnalysisTool();
+      CommandLine commandLine = new CommandLine(tool);
+
+      try {
+          commandLine.parse(args);
+      } catch (Throwable t) {
+          System.err.println( t.getMessage() );
+          System.exit( -1 );
+      }
+
+      if (commandLine.isUsageHelpRequested()) {
+         commandLine.usage(System.out);
+         System.exit( 1 );
+      } else if (commandLine.isVersionHelpRequested()) {
+         commandLine.printVersionHelp(System.out);
+         System.exit( 1 );
+      }
+
+      Runtime.getRuntime().addShutdownHook( new ShutDownHook() );
+
+      tool.execute();
+  }
+
+  private void execute() throws IOException, XMLStreamException {
 
     Arrays.sort(stopTags);
     InputStream posStream = JiraAnalysisTool.class.getResourceAsStream("/en-pos-maxent.bin");
     POSModel posModel = new POSModel(posStream);
     POSTaggerME tagger = new POSTaggerME(posModel);
-
-    log.info("Command line arguments {}", Arrays.toString(args));
 
     JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(pathToJiraExport);
     Map<String, JiraIssue> issues = jiraIssueXMLParser.parse();
@@ -242,31 +289,148 @@ public class JiraAnalysisTool {
     return topics;
   }
 
-  private static String readFrom(String[] args, int i) {
-    // resource, epochs, layerSize, clusterCount, maxIterationCount, distanceFunction, topN, hierarchical vectors, include comments, index
-    if (args != null && args.length > i) {
-      return args[i];
-    } else {
-      String defaultString;
-      if (i == 0) {
-        defaultString = "src/test/resources/opennlp-issues.xml";
-      } else if (i == 1) {
-        defaultString = "5";
-      } else if (i == 2) {
-        defaultString = "200";
-      } else if (i == 3) {
-        defaultString = "5";
-      } else if (i == 4) {
-        defaultString = "false";
-      } else if (i == 5) {
-        defaultString = "true";
-      } else if (i == 6) {
-        defaultString = "true";
-      } else {
-        throw new RuntimeException("unexpected index " + i + "with args " + Arrays.toString(args));
+  public static final class JtmVersionProvider implements IVersionProvider {
+
+      @Override
+      public String[] getVersion() throws Exception {
+        return new String[]{
+            "                         ''~``",
+            "                        ( o o )",
+            "+------------------.oooO--(_)--Oooo.------------------+",
+            String.format( "%s v%s (built on %s)",
+                           System.getProperty( "project.artifactId" ),
+                           System.getProperty( "project.version" ),
+                           System.getProperty( "build.timestamp" ) ),
+            String.format( "Java version: %s, vendor: %s",
+                        System.getProperty( "java.version" ),
+                        System.getProperty( "java.vendor" ) ),
+            String.format( "Java home: %s", System.getProperty( "java.home" ) ),
+            String.format( "Default locale: %s_%s, platform encoding: %s",
+                        System.getProperty( "user.language" ),
+                        System.getProperty( "user.country" ),
+                        System.getProperty( "sun.jnu.encoding" ) ),
+            String.format( "OS name: \"%s\", version: \"%s\", arch: \"%s\", family: \"%s\"",
+                        System.getProperty( "os.name" ),
+                        System.getProperty( "os.version" ),
+                        System.getProperty( "os.arch" ),
+                        getOsFamily() ),
+            "                     .oooO                            ",
+            "                     (   )   Oooo.                    ",
+            "+---------------------\\ (----(   )--------------------+",
+            "                       \\_)    ) /",
+            "                             (_/"
+        };
       }
-      return defaultString;
-    }
+
+      private static final String getOsFamily() {
+          String osName = System.getProperty( "os.name" ).toLowerCase();
+          String pathSep = System.getProperty( "path.separator" );
+
+          if ( osName.indexOf( "windows" ) != -1 )
+          {
+              return "windows";
+          }
+          else if ( osName.indexOf( "os/2" ) != -1 )
+          {
+              return "os/2";
+          }
+          else if ( osName.indexOf( "z/os" ) != -1 || osName.indexOf( "os/390" ) != -1 )
+          {
+              return "z/os";
+          }
+          else if ( osName.indexOf( "os/400" ) != -1 )
+          {
+              return "os/400";
+          }
+          else if ( pathSep.equals( ";" ) )
+          {
+              return "dos";
+          }
+          else if ( osName.indexOf( "mac" ) != -1 )
+          {
+              if ( osName.endsWith( "x" ) )
+              {
+                  return "mac"; // MACOSX
+              }
+              return "unix";
+          }
+          else if ( osName.indexOf( "nonstop_kernel" ) != -1 )
+          {
+              return "tandem";
+          }
+          else if ( osName.indexOf( "openvms" ) != -1 )
+          {
+              return "openvms";
+          }
+          else if ( pathSep.equals( ":" ) )
+          {
+              return "unix";
+          }
+
+          return "undefined";
+      }
+
+  }
+
+  private static final class ShutDownHook extends Thread {
+
+      private final long start = System.currentTimeMillis();
+
+      public ShutDownHook() {
+          super("shutdown-hook");
+      }
+
+      public void run() {
+          log.info( "" );
+          log.info( "                         ''~``" );
+          log.info( "                        ( o o )" );
+          log.info( "+------------------.oooO--(_)--Oooo.------------------+" );
+
+          // format the uptime string
+
+          Formatter uptime = new Formatter();
+          uptime.format( "Total uptime:" );
+
+          long uptimeInSeconds = ( System.currentTimeMillis() - start ) / 1000;
+          final long hours = uptimeInSeconds / 3600;
+
+          if ( hours > 0 )
+          {
+              uptime.format( " %s hour%s", hours, ( hours > 1 ? "s" : "" ) );
+          }
+
+          uptimeInSeconds = uptimeInSeconds - ( hours * 3600 );
+          final long minutes = uptimeInSeconds / 60;
+
+          if ( minutes > 0 )
+          {
+              uptime.format( " %s minute%s", minutes, ( minutes > 1 ? "s" : "" ) );
+          }
+
+          uptimeInSeconds = uptimeInSeconds - ( minutes * 60 );
+
+          if ( uptimeInSeconds > 0 )
+          {
+              uptime.format( " %s second%s", uptimeInSeconds, ( uptimeInSeconds > 1 ? "s" : "" ) );
+          }
+
+          log.info( uptime.toString() );
+          uptime.close();
+
+          log.info( "Finished at: {}", new Date() );
+
+          final Runtime runtime = Runtime.getRuntime();
+          final int megaUnit = 1024 * 1024;
+          log.info( "Final Memory: {}M/{}M",
+                       ( runtime.totalMemory() - runtime.freeMemory() ) / megaUnit,
+                       runtime.totalMemory() / megaUnit );
+
+          log.info( "                     .oooO                            " );
+          log.info( "                     (   )   Oooo.                    " );
+          log.info( "+---------------------\\ (----(   )--------------------+" );
+          log.info( "                       \\_)    ) /" );
+          log.info( "                             (_/" );
+      }
 
   }
 
