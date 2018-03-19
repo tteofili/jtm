@@ -201,23 +201,33 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 
-Simple HttpServer DEMO SUBCOMPONENTS:
+<#function licenseFormat licenses>
+    <#assign result = ""/>
+    <#list licenses as license>
+        <#if result?length &gt; 0>
+            <#assign result = result + ", " />
+        </#if>
+        <#assign result = result + license />
+    </#list>
+    <#return result>
+</#function>
 
-Simple HttpServer DEMO includes a number of subcomponents with
-separate copyright notices and license terms. Your use of the source
-code for the these subcomponents is subject to the terms and
-conditions of the following licenses.
+<#function artifactFormat p>
+    <#if p.name?index_of('Unnamed') &gt; -1>
+        <#return p.groupId + ":" + p.artifactId + ":" + p.version + " (" + (p.url!"no url defined") + ")">
+    <#else>
+        <#return p.name + " v" + p.version + " (" + (p.url!"no url defined") + ")">
+    </#if>
+</#function>
 
-For the JCommander component (http://jcommander.org/)
-This is licensed under the AL 2.0, see above
+<#if dependencyMap?size == 0>
+The project has no dependencies.
+<#else>
+    <#list dependencyMap as e>
+        <#assign project = e.getKey()/>
+        <#assign licenses = e.getValue()/>
+For the ${artifactFormat(project)} component
+This is licensed under ${licenseFormat(licenses)}
 
-For the Apache Velocity component (http://velocity.apache.org/)
-This is licensed under the AL 2.0, see above
-
-For the SLF4J component (http://www.slf4j.org/)
-This is licensed under the MIT License
-
-For the Logback component (http://logback.qos.ch/license.html)
-This program and the accompanying materials are dual-licensed under
-either the terms of the Eclipse Public License v1.0 as published by
-the Eclipse Foundation
+    </#list>
+</#if>

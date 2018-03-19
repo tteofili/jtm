@@ -23,7 +23,7 @@
      | Use the N&L files which apply to the included dependencies
     -->
     <file>
-      <source>${basedir}/src/main/assembly/LICENSE-with-deps</source>
+      <source>${project.build.directory}/generated-sources/license/LICENSE-with-deps</source>
       <destName>LICENSE</destName>
     </file>
     <file>
