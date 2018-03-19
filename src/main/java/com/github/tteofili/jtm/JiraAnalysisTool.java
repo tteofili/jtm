@@ -97,7 +97,7 @@ public class JiraAnalysisTool {
   @Option(names = { "-V", "--version" }, versionHelp = true, description = "display version info.")
   private boolean versionInfoRequested;
 
-  public static void main(String[] args) throws IOException, XMLStreamException {
+  public static void main(String[] args) {
       /* exit statuses:
        * -1: error
        *  0: info
