@@ -98,6 +98,11 @@ public class JiraAnalysisTool {
   private boolean versionInfoRequested;
 
   public static void main(String[] args) throws IOException, XMLStreamException {
+      /* exit statuses:
+       * -1: error
+       *  0: info
+       *  1: success
+       */
       JiraAnalysisTool tool = new JiraAnalysisTool();
       CommandLine commandLine = new CommandLine(tool);
 
@@ -110,15 +115,22 @@ public class JiraAnalysisTool {
 
       if (commandLine.isUsageHelpRequested()) {
          commandLine.usage(System.out);
-         System.exit( 1 );
+         System.exit( 0 );
       } else if (commandLine.isVersionHelpRequested()) {
          commandLine.printVersionHelp(System.out);
-         System.exit( 1 );
+         System.exit( 0 );
       }
 
       Runtime.getRuntime().addShutdownHook( new ShutDownHook() );
 
-      tool.execute();
+      int status = 1;
+      try {
+          tool.execute();
+      } catch (Throwable t) {
+          System.err.println( t.getMessage() );
+          status = -1;
+      }
+      System.exit( status );
   }
 
   private void execute() throws IOException, XMLStreamException {
