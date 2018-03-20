@@ -49,6 +49,9 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.core.joran.spi.JoranException;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
 import picocli.CommandLine;
@@ -91,11 +94,17 @@ public class JiraAnalysisTool {
   @Option(names = { "-i", "--index" }, description = "Index.")
   private boolean index = true;
 
-  @Option(names = { "-h", "--help" }, usageHelp = true, description = "display the usage message.")
+  @Option(names = { "-h", "--help" }, usageHelp = true, description = "Display the usage message.")
   private boolean helpRequested = false;
 
-  @Option(names = { "-V", "--version" }, versionHelp = true, description = "display version info.")
-  private boolean versionInfoRequested;
+  @Option(names = { "-V", "--version" }, versionHelp = true, description = "Display version info.")
+  private boolean versionInfoRequested = false;
+
+  @Option(names = { "-X", "--verbose" }, description = "Produce execution debug output.")
+  private boolean verbose = false;
+
+  @Option( names = { "-q", "--quiet" }, description = "Log errors only." )
+  private boolean quiet;
 
   public static void main(String[] args) {
       /* exit statuses:
@@ -122,6 +131,38 @@ public class JiraAnalysisTool {
       }
 
       Runtime.getRuntime().addShutdownHook( new ShutDownHook() );
+
+      // setup the logging stuff
+
+      if ( tool.quiet )
+      {
+          System.setProperty( "logging.level", "ERROR" );
+      }
+      else if ( tool.verbose )
+      {
+          System.setProperty( "logging.level", "DEBUG" );
+      }
+      else
+      {
+          System.setProperty( "logging.level", "INFO" );
+      }
+
+      // assume SLF4J is bound to logback in the current environment
+      final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+      try
+      {
+          JoranConfigurator configurator = new JoranConfigurator();
+          configurator.setContext( lc );
+          // the context was probably already configured by default configuration
+          // rules
+          lc.reset();
+          configurator.doConfigure( JiraAnalysisTool.class.getClassLoader().getResourceAsStream( "logback-config.xml" ) );
+      }
+      catch ( JoranException je )
+      {
+          // StatusPrinter should handle this
+      }
 
       int status = 1;
       try {

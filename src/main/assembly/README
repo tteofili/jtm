@@ -104,17 +104,19 @@
   Open the shell and type `jtm -h` to see the available options:
 
 +-------------------------------------------------------------------------------+
-Usage: jtm [-chivV] [-e=<epochs>] [-l=<layerSize>] -p=<pathToJiraExport>
+Usage: jtm [-chiqvVX] [-e=<epochs>] [-l=<layerSize>] -p=<pathToJiraExport>
            [-t=<topN>]
   -c, --include-comments      Include comments.
   -e, --epochs=<epochs>       Epochs.
-  -h, --help                  display the usage message.
+  -h, --help                  Display the usage message.
   -i, --index                 Index.
   -l, --layer-size=<layerSize>
                               Layers.
   -p, --path=<pathToJiraExport>
                               JIRA path to be exported.
+  -q, --quiet                 Log errors only.
   -t, --top-n=<topN>          Top.
   -v, --hierarchical-vectors  Hierarchical vectors.
-  -V, --version               display version info.
+  -V, --version               Display version info.
+  -X, --verbose               Produce execution debug output.
 +-------------------------------------------------------------------------------+

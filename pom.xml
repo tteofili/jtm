@@ -85,7 +85,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <javac.src.version>1.8</javac.src.version>
         <javac.target.version>1.8</javac.target.version>
-        <maven.build.timestamp.format>yyyy-MM-dd HH:mm:ssZ</maven.build.timestamp.format>
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
         <!--
          | dependencies configuration
         -->
@@ -97,22 +97,34 @@
     </properties>
 
     <dependencies>
+        <!--
+         | CLI
+        -->
         <dependency>
             <groupId>info.picocli</groupId>
             <artifactId>picocli</artifactId>
             <version>2.3.0</version>
         </dependency>
 
+        <!--
+         | Logging
+        -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.25</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.3</version>
+        </dependency>
+
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>x-pack-transport</artifactId>
             <version>6.2.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.12</version>
         </dependency>
 
         <dependency>
