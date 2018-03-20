@@ -71,8 +71,6 @@ public class JiraAnalysisTool {
 
   private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
 
-  //resource, epochs, layerSize, clusterCount, maxIterationCount, distanceFunction, topN, hierarchical vectors, include comments, index
-
   @Option(names = { "-p", "--path" }, description = "JIRA path to be exported.", required = true)
   private String pathToJiraExport;
 
