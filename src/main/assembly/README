@@ -106,6 +106,8 @@
 +-------------------------------------------------------------------------------+
 Usage: jtm [-chiqvVX] [-e=<epochs>] [-l=<layerSize>] -p=<pathToJiraExport>
            [-t=<topN>]
+Tool for analyzing Atlassian Jira issues exported to the XML feed format
+This tool does topic modelling based on word2vec and paragraph vectors
   -c, --include-comments      Include comments.
   -e, --epochs=<epochs>       Epochs.
   -h, --help                  Display the usage message.

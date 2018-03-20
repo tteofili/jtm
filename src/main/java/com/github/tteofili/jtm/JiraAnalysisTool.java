@@ -64,7 +64,12 @@ import picocli.CommandLine.Option;
  * This tool does topic modelling based on word2vec and paragraph vectors.
  *
  */
-@Command(name = "jtm", versionProvider = JiraAnalysisTool.JtmVersionProvider.class)
+@Command(
+    name = "jtm",
+    descriptionHeading = "Tool for analyzing Atlassian Jira issues exported to the XML feed format\n",
+    description = "This tool does topic modelling based on word2vec and paragraph vectors",
+    versionProvider = JiraAnalysisTool.JtmVersionProvider.class
+)
 public class JiraAnalysisTool {
 
   private static final Logger log = LoggerFactory.getLogger(JiraAnalysisTool.class);
