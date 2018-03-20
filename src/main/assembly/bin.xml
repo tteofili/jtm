@@ -27,7 +27,7 @@
       <destName>LICENSE</destName>
     </file>
     <file>
-      <source>${basedir}/src/main/assembly/NOTICE-with-deps</source>
+      <source>${basedir}/src/main/license/NOTICE-with-deps</source>
       <destName>NOTICE</destName>
     </file>
   </files>
@@ -49,10 +49,6 @@
     <fileSet>
       <directory>${basedir}/src/main/resources</directory>
       <outputDirectory>/etc</outputDirectory>
-      <filtered>true</filtered>
-      <excludes>
-        <exclude>**/*.xml</exclude>
-      </excludes>
     </fileSet>
 
     <!--
