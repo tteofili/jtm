@@ -167,14 +167,39 @@ public class JiraAnalysisTool {
           // StatusPrinter should handle this
       }
 
+      log.info( "                         ''~``" );
+      log.info( "                        ( o o )" );
+      log.info( "+------------------.oooO--(_)--Oooo.------------------+" );
+      log.info( "{} v{}", new Object[]{ System.getProperty( "app.name" ), System.getProperty( "project.version" ) } );
+      log.info( "+-----------------------------------------------------+" );
+      log.info( "" );
+
       int status = 1;
+      Throwable error = null;
       try {
           tool.execute();
       } catch (Throwable t) {
-          System.err.println( t.getMessage() );
           status = -1;
+          error = t;
       }
-      System.exit( status );
+
+      log.info( "+-----------------------------------------------------+" );
+      log.info( "{} {}", System.getProperty( "app.name" ).toUpperCase(), ( status < 0 ) ? "FAILURE" : "SUCCESS" );
+      log.info( "+-----------------------------------------------------+" );
+
+      if ( status < 0 )
+      {
+          if ( tool.verbose )
+          {
+              log.error( "Execution terminated with errors", error );
+          }
+          else
+          {
+              log.error( "Execution terminated with errors: {}", error.getMessage() );
+          }
+
+          log.info( "+-----------------------------------------------------+" );
+      }
   }
 
   private void execute() throws IOException, XMLStreamException {
@@ -437,11 +462,6 @@ public class JiraAnalysisTool {
       }
 
       public void run() {
-          log.info( "" );
-          log.info( "                         ''~``" );
-          log.info( "                        ( o o )" );
-          log.info( "+------------------.oooO--(_)--Oooo.------------------+" );
-
           // format the uptime string
 
           Formatter uptime = new Formatter();
