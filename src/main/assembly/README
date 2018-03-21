@@ -104,18 +104,17 @@
   Open the shell and type `jtm -h` to see the available options:
 
 +-------------------------------------------------------------------------------+
-Usage: jtm [-chiqvVX] [-e=<epochs>] [-l=<layerSize>] -p=<pathToJiraExport>
-           [-t=<topN>]
+Usage: jtm [-chiqvVX] [-e=<epochs>] [-l=<layerSize>] [-t=<topN>]
+           <pathToJiraExport>
 Tool for analyzing Atlassian Jira issues exported to the XML feed format
 This tool does topic modelling based on word2vec and paragraph vectors
+      <pathToJiraExport>      JIRA path to be exported.
   -c, --include-comments      Include comments.
   -e, --epochs=<epochs>       Epochs.
   -h, --help                  Display the usage message.
   -i, --index                 Index.
   -l, --layer-size=<layerSize>
                               Layers.
-  -p, --path=<pathToJiraExport>
-                              JIRA path to be exported.
   -q, --quiet                 Log errors only.
   -t, --top-n=<topN>          Top.
   -v, --hierarchical-vectors  Hierarchical vectors.
