@@ -58,6 +58,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 /**
  * Tool for analyzing Jira issues exported as XML.
@@ -76,7 +77,7 @@ public class JiraAnalysisTool {
 
   private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
 
-  @Option(names = { "-p", "--path" }, description = "JIRA path to be exported.", required = true)
+  @Parameters(index = "0", description = "Exported JIRA XML feed path.", arity = "1")
   private String pathToJiraExport;
 
   @Option(names = { "-e", "--epochs" }, description = "Epochs.")
