@@ -49,6 +49,9 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.core.joran.spi.JoranException;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
 import picocli.CommandLine;
@@ -61,14 +64,17 @@ import picocli.CommandLine.Option;
  * This tool does topic modelling based on word2vec and paragraph vectors.
  *
  */
-@Command(name = "jtm", versionProvider = JiraAnalysisTool.JtmVersionProvider.class)
+@Command(
+    name = "jtm",
+    descriptionHeading = "Tool for analyzing Atlassian Jira issues exported to the XML feed format\n",
+    description = "This tool does topic modelling based on word2vec and paragraph vectors",
+    versionProvider = JiraAnalysisTool.JtmVersionProvider.class
+)
 public class JiraAnalysisTool {
 
   private static final Logger log = LoggerFactory.getLogger(JiraAnalysisTool.class);
 
   private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
-
-  //resource, epochs, layerSize, clusterCount, maxIterationCount, distanceFunction, topN, hierarchical vectors, include comments, index
 
   @Option(names = { "-p", "--path" }, description = "JIRA path to be exported.", required = true)
   private String pathToJiraExport;
@@ -91,13 +97,24 @@ public class JiraAnalysisTool {
   @Option(names = { "-i", "--index" }, description = "Index.")
   private boolean index = true;
 
-  @Option(names = { "-h", "--help" }, usageHelp = true, description = "display the usage message.")
+  @Option(names = { "-h", "--help" }, usageHelp = true, description = "Display the usage message.")
   private boolean helpRequested = false;
 
-  @Option(names = { "-V", "--version" }, versionHelp = true, description = "display version info.")
-  private boolean versionInfoRequested;
+  @Option(names = { "-V", "--version" }, versionHelp = true, description = "Display version info.")
+  private boolean versionInfoRequested = false;
 
-  public static void main(String[] args) throws IOException, XMLStreamException {
+  @Option(names = { "-X", "--verbose" }, description = "Produce execution debug output.")
+  private boolean verbose = false;
+
+  @Option( names = { "-q", "--quiet" }, description = "Log errors only." )
+  private boolean quiet;
+
+  public static void main(String[] args) {
+      /* exit statuses:
+       * -1: error
+       *  0: info
+       *  1: success
+       */
       JiraAnalysisTool tool = new JiraAnalysisTool();
       CommandLine commandLine = new CommandLine(tool);
 
@@ -110,15 +127,79 @@ public class JiraAnalysisTool {
 
       if (commandLine.isUsageHelpRequested()) {
          commandLine.usage(System.out);
-         System.exit( 1 );
+         System.exit( 0 );
       } else if (commandLine.isVersionHelpRequested()) {
          commandLine.printVersionHelp(System.out);
-         System.exit( 1 );
+         System.exit( 0 );
       }
 
       Runtime.getRuntime().addShutdownHook( new ShutDownHook() );
 
-      tool.execute();
+      // setup the logging stuff
+
+      if ( tool.quiet )
+      {
+          System.setProperty( "logging.level", "ERROR" );
+      }
+      else if ( tool.verbose )
+      {
+          System.setProperty( "logging.level", "DEBUG" );
+      }
+      else
+      {
+          System.setProperty( "logging.level", "INFO" );
+      }
+
+      // assume SLF4J is bound to logback in the current environment
+      final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
+
+      try
+      {
+          JoranConfigurator configurator = new JoranConfigurator();
+          configurator.setContext( lc );
+          // the context was probably already configured by default configuration
+          // rules
+          lc.reset();
+          configurator.doConfigure( JiraAnalysisTool.class.getClassLoader().getResourceAsStream( "logback-config.xml" ) );
+      }
+      catch ( JoranException je )
+      {
+          // StatusPrinter should handle this
+      }
+
+      log.info( "                         ''~``" );
+      log.info( "                        ( o o )" );
+      log.info( "+------------------.oooO--(_)--Oooo.------------------+" );
+      log.info( "{} v{}", new Object[]{ System.getProperty( "app.name" ), System.getProperty( "project.version" ) } );
+      log.info( "+-----------------------------------------------------+" );
+      log.info( "" );
+
+      int status = 1;
+      Throwable error = null;
+      try {
+          tool.execute();
+      } catch (Throwable t) {
+          status = -1;
+          error = t;
+      }
+
+      log.info( "+-----------------------------------------------------+" );
+      log.info( "{} {}", System.getProperty( "app.name" ).toUpperCase(), ( status < 0 ) ? "FAILURE" : "SUCCESS" );
+      log.info( "+-----------------------------------------------------+" );
+
+      if ( status < 0 )
+      {
+          if ( tool.verbose )
+          {
+              log.error( "Execution terminated with errors", error );
+          }
+          else
+          {
+              log.error( "Execution terminated with errors: {}", error.getMessage() );
+          }
+
+          log.info( "+-----------------------------------------------------+" );
+      }
   }
 
   private void execute() throws IOException, XMLStreamException {
@@ -381,11 +462,6 @@ public class JiraAnalysisTool {
       }
 
       public void run() {
-          log.info( "" );
-          log.info( "                         ''~``" );
-          log.info( "                        ( o o )" );
-          log.info( "+------------------.oooO--(_)--Oooo.------------------+" );
-
           // format the uptime string
 
           Formatter uptime = new Formatter();
