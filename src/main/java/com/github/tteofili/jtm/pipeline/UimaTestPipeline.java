@@ -1,11 +1,9 @@
 package com.github.tteofili.jtm.pipeline;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.Map;
 
-import com.github.tteofili.jtm.JiraAnalysisTool;
-import com.github.tteofili.jtm.JiraIssue;
-import com.github.tteofili.jtm.JiraIssueXMLParser;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
@@ -25,6 +23,10 @@ import org.deeplearning4j.models.embeddings.learning.impl.elements.SkipGram;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
+
+import com.github.tteofili.jtm.JiraAnalysisTool;
+import com.github.tteofili.jtm.JiraIssue;
+import com.github.tteofili.jtm.JiraIssueXMLParser;
 
 import opennlp.tools.chunker.Chunker;
 import opennlp.tools.chunker.ChunkerME;
@@ -60,7 +62,7 @@ public class UimaTestPipeline {
 
     env.getConfig().registerTypeWithKryoSerializer(CASImpl.class, KryoCasSerializer.class);
 
-    JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser("src/test/resources/opennlp-issues.xml");
+    JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(new File("src/test/resources/opennlp-issues.xml"));
     Map<String, JiraIssue> issues = jiraIssueXMLParser.parse();
 
     DataStreamSource<JiraIssue> jiraIssueDataStreamSource = env.fromCollection(issues.values());

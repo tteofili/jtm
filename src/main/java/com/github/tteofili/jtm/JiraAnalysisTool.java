@@ -15,6 +15,7 @@
  */
 package com.github.tteofili.jtm;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -64,7 +65,7 @@ public class JiraAnalysisTool {
 
   private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
 
-  private final String pathToJiraExport;
+  private final File exportedJiraFeed;
 
   private final int epochs;
 
@@ -78,7 +79,7 @@ public class JiraAnalysisTool {
 
   private final boolean index;
 
-  public JiraAnalysisTool( String pathToJiraExport,
+  public JiraAnalysisTool( File exportedJiraFeed,
                            int epochs,
                            int layerSize,
                            int topN,
@@ -86,7 +87,7 @@ public class JiraAnalysisTool {
                            boolean includeComments,
                            boolean index )
   {
-    this.pathToJiraExport = pathToJiraExport;
+    this.exportedJiraFeed = exportedJiraFeed;
     this.epochs = epochs;
     this.layerSize = layerSize;
     this.topN = topN;
@@ -101,7 +102,7 @@ public class JiraAnalysisTool {
     POSModel posModel = new POSModel(posStream);
     POSTaggerME tagger = new POSTaggerME(posModel);
 
-    JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(pathToJiraExport);
+    JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(exportedJiraFeed);
     Map<String, JiraIssue> issues = jiraIssueXMLParser.parse();
 
     log.info("{} issues parsed", issues.size());

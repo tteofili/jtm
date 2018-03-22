@@ -15,6 +15,7 @@
  */
 package com.github.tteofili.jtm;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,17 +55,17 @@ public class JiraIssueXMLParser {
   private static final String ELEMENT_COMPONENT = "component";
   private static final String ELEMENT_COMMENT = "comment";
 
-  private final String file;
+  private final File exportedJiraFeed;
   private final XMLInputFactory factory = XMLInputFactory.newInstance();
   private final Map<String, JiraIssue> issues;
 
-  public JiraIssueXMLParser(final String file) {
-    this.file = file;
+  public JiraIssueXMLParser(final File exportedJiraFeed) {
+    this.exportedJiraFeed = exportedJiraFeed;
     this.issues = new HashMap<>();
   }
 
   public Map<String, JiraIssue> parse() throws IOException, XMLStreamException {
-    try (final InputStream stream = new FileInputStream(file)) {
+    try (final InputStream stream = new FileInputStream(exportedJiraFeed)) {
       final XMLEventReader reader = factory.createXMLEventReader(stream);
       while (reader.hasNext()) {
         final XMLEvent event = reader.nextEvent();

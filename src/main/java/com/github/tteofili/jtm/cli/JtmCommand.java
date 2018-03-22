@@ -1,5 +1,7 @@
 package com.github.tteofili.jtm.cli;
 
+import java.io.File;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,8 +26,8 @@ public class JtmCommand
 
     private static final Logger log = LoggerFactory.getLogger(JtmCommand.class);
 
-    @Parameters(index = "0", description = "Exported JIRA XML feed path.", arity = "1")
-    private String pathToJiraExport;
+    @Parameters(index = "0", description = "Exported JIRA XML feed file.", arity = "1")
+    private File exportedJiraFeed;
 
     @Option(names = { "-e", "--epochs" }, description = "Epochs.")
     private int epochs = 5;
@@ -126,7 +128,7 @@ public class JtmCommand
         int status = 1;
         Throwable error = null;
         try {
-            new JiraAnalysisTool( command.pathToJiraExport,
+            new JiraAnalysisTool( command.exportedJiraFeed,
                                   command.epochs,
                                   command.layerSize,
                                   command.topN,
