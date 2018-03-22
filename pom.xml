@@ -413,7 +413,7 @@
                             <licenseHeaderFile>${basedir}/src/main/license/license-header.txt</licenseHeaderFile>
                             <programs>
                                 <program>
-                                    <mainClass>com.github.tteofili.jtm.JiraAnalysisTool</mainClass>
+                                    <mainClass>com.github.tteofili.jtm.cli.JtmCommand</mainClass>
                                     <name>jtm</name>
                                 </program>
                             </programs>

@@ -15,6 +15,7 @@
  */
 package com.github.tteofili.jtm;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -49,168 +50,59 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.joran.JoranConfigurator;
-import ch.qos.logback.core.joran.spi.JoranException;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
 import picocli.CommandLine.IVersionProvider;
-import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 /**
  * Tool for analyzing Jira issues exported as XML.
  * This tool does topic modelling based on word2vec and paragraph vectors.
  *
  */
-@Command(
-    name = "jtm",
-    descriptionHeading = "Tool for analyzing Atlassian Jira issues exported to the XML feed format\n",
-    description = "This tool does topic modelling based on word2vec and paragraph vectors",
-    versionProvider = JiraAnalysisTool.JtmVersionProvider.class
-)
 public class JiraAnalysisTool {
 
   private static final Logger log = LoggerFactory.getLogger(JiraAnalysisTool.class);
 
   private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
 
-  @Parameters(index = "0", description = "Exported JIRA XML feed path.", arity = "1")
-  private String pathToJiraExport;
+  private final File exportedJiraFeed;
 
-  @Option(names = { "-e", "--epochs" }, description = "Epochs.")
-  private int epochs = 5;
+  private final int epochs;
 
-  @Option(names = { "-l", "--layer-size" }, description = "Layers.")
-  private int layerSize = 200;
+  private final int layerSize;
 
-  @Option(names = { "-t", "--top-n" }, description = "Top.")
-  private int topN = 200;
+  private final int topN;
 
-  @Option(names = { "-v", "--hierarchical-vectors" }, description = "Hierarchical vectors.")
-  private boolean hierarchicalVectors = false;
+  private final boolean hierarchicalVectors;
 
-  @Option(names = { "-c", "--include-comments" }, description = "Include comments.")
-  private boolean includeComments = true;
+  private final boolean includeComments;
 
-  @Option(names = { "-i", "--index" }, description = "Index.")
-  private boolean index = true;
+  private final boolean index;
 
-  @Option(names = { "-h", "--help" }, usageHelp = true, description = "Display the usage message.")
-  private boolean helpRequested = false;
-
-  @Option(names = { "-V", "--version" }, versionHelp = true, description = "Display version info.")
-  private boolean versionInfoRequested = false;
-
-  @Option(names = { "-X", "--verbose" }, description = "Produce execution debug output.")
-  private boolean verbose = false;
-
-  @Option( names = { "-q", "--quiet" }, description = "Log errors only." )
-  private boolean quiet;
-
-  public static void main(String[] args) {
-      /* exit statuses:
-       * -1: error
-       *  0: info
-       *  1: success
-       */
-      JiraAnalysisTool tool = new JiraAnalysisTool();
-      CommandLine commandLine = new CommandLine(tool);
-
-      try {
-          commandLine.parse(args);
-      } catch (Throwable t) {
-          System.err.println( t.getMessage() );
-          System.exit( -1 );
-      }
-
-      if (commandLine.isUsageHelpRequested()) {
-         commandLine.usage(System.out);
-         System.exit( 0 );
-      } else if (commandLine.isVersionHelpRequested()) {
-         commandLine.printVersionHelp(System.out);
-         System.exit( 0 );
-      }
-
-      Runtime.getRuntime().addShutdownHook( new ShutDownHook() );
-
-      // setup the logging stuff
-
-      if ( tool.quiet )
-      {
-          System.setProperty( "logging.level", "ERROR" );
-      }
-      else if ( tool.verbose )
-      {
-          System.setProperty( "logging.level", "DEBUG" );
-      }
-      else
-      {
-          System.setProperty( "logging.level", "INFO" );
-      }
-
-      // assume SLF4J is bound to logback in the current environment
-      final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-      try
-      {
-          JoranConfigurator configurator = new JoranConfigurator();
-          configurator.setContext( lc );
-          // the context was probably already configured by default configuration
-          // rules
-          lc.reset();
-          configurator.doConfigure( JiraAnalysisTool.class.getClassLoader().getResourceAsStream( "logback-config.xml" ) );
-      }
-      catch ( JoranException je )
-      {
-          // StatusPrinter should handle this
-      }
-
-      log.info( "                         ''~``" );
-      log.info( "                        ( o o )" );
-      log.info( "+------------------.oooO--(_)--Oooo.------------------+" );
-      log.info( "{} v{}", new Object[]{ System.getProperty( "app.name" ), System.getProperty( "project.version" ) } );
-      log.info( "+-----------------------------------------------------+" );
-      log.info( "" );
-
-      int status = 1;
-      Throwable error = null;
-      try {
-          tool.execute();
-      } catch (Throwable t) {
-          status = -1;
-          error = t;
-      }
-
-      log.info( "+-----------------------------------------------------+" );
-      log.info( "{} {}", System.getProperty( "app.name" ).toUpperCase(), ( status < 0 ) ? "FAILURE" : "SUCCESS" );
-      log.info( "+-----------------------------------------------------+" );
-
-      if ( status < 0 )
-      {
-          if ( tool.verbose )
-          {
-              log.error( "Execution terminated with errors", error );
-          }
-          else
-          {
-              log.error( "Execution terminated with errors: {}", error.getMessage() );
-          }
-
-          log.info( "+-----------------------------------------------------+" );
-      }
+  public JiraAnalysisTool( File exportedJiraFeed,
+                           int epochs,
+                           int layerSize,
+                           int topN,
+                           boolean hierarchicalVectors,
+                           boolean includeComments,
+                           boolean index )
+  {
+    this.exportedJiraFeed = exportedJiraFeed;
+    this.epochs = epochs;
+    this.layerSize = layerSize;
+    this.topN = topN;
+    this.hierarchicalVectors = hierarchicalVectors;
+    this.includeComments = includeComments;
+    this.index = index;
   }
 
-  private void execute() throws IOException, XMLStreamException {
-
+  public void execute() throws IOException, XMLStreamException {
     Arrays.sort(stopTags);
     InputStream posStream = JiraAnalysisTool.class.getResourceAsStream("/en-pos-maxent.bin");
     POSModel posModel = new POSModel(posStream);
     POSTaggerME tagger = new POSTaggerME(posModel);
 
-    JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(pathToJiraExport);
+    JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(exportedJiraFeed);
     Map<String, JiraIssue> issues = jiraIssueXMLParser.parse();
 
     log.info("{} issues parsed", issues.size());
