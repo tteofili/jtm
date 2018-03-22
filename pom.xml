@@ -356,6 +356,29 @@
             </plugin>
 
             <plugin>
+                <groupId>org.codehaus.modello</groupId>
+                <artifactId>modello-maven-plugin</artifactId>
+                <version>1.9.1</version>
+                <executions>
+                    <execution>
+                        <id>generate-sources</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>java</goal>
+                            <goal>stax-reader</goal>
+                        </goals>
+                        <configuration>
+                            <version>1.0.0</version>
+                            <useJava5>true</useJava5>
+                            <models>
+                                <model>src/main/mdo/jira-rss.mdo</model>
+                            </models>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
