@@ -36,7 +36,7 @@ public class JtmCommand
     private int layerSize = 200;
 
     @Option(names = { "-t", "--top-n" }, description = "Top.")
-    private int topN = 200;
+    private int topN = 5;
 
     @Option(names = { "-v", "--hierarchical-vectors" }, description = "Hierarchical vectors.")
     private boolean hierarchicalVectors = false;
@@ -45,7 +45,7 @@ public class JtmCommand
     private boolean includeComments = true;
 
     @Option(names = { "-i", "--index" }, description = "Index.")
-    private boolean index = true;
+    private boolean index = false;
 
     @Option(names = { "-h", "--help" }, usageHelp = true, description = "Display the usage message.")
     private boolean helpRequested = false;
