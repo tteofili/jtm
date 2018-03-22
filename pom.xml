@@ -60,7 +60,7 @@
         <url>https://github.com/tteofili/jtm/issues</url>
     </issueManagement>
     <ciManagement>
-        <system>Trevis CI</system>
+        <system>Travis CI</system>
         <url>https://travis-ci.org/tteofili/jtm/</url>
     </ciManagement>
     <distributionManagement>

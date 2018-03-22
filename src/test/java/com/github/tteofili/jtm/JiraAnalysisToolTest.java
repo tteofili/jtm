@@ -31,31 +31,24 @@ import org.junit.runners.Parameterized;
 public class JiraAnalysisToolTest {
 
   private final String resource;
-  private final String epochs;
-  private final String layerSize;
-  private final String clusterCount;
-  private final String maxIterationCount;
-  private final String distanceFunction;
-  private final String topN;
+  private final int epochs;
+  private final int layerSize;
+  private final int topN;
 
-  public JiraAnalysisToolTest(String resource, String epochs, String layerSize, String clusterCount,
-                              String maxIterationCount, String distanceFunction, String topN) {
+  public JiraAnalysisToolTest(String resource, int epochs, int layerSize, int topN) {
     this.resource = resource;
     this.epochs = epochs;
     this.layerSize = layerSize;
-    this.clusterCount = clusterCount;
-    this.maxIterationCount = maxIterationCount;
-    this.distanceFunction = distanceFunction;
     this.topN = topN;
   }
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
-    // resource, epochs, layerSize, clusterCount, maxIterationCount, distanceFunction, topN
+    // resource, epochs, layerSize, topN
     return Arrays.asList(new Object[][] {
-        {"/opennlp-issues.xml", "5", "200", "10", "5", "cosinesimilarity", "5"},
-        {"/lucene-issues.xml", "5", "200", "10", "5", "cosinesimilarity", "5"},
-        {"/oak-issues.xml", "5", "200", "10", "5", "cosinesimilarity", "5"},
+        {"/opennlp-issues.xml", 2, 60, 3},
+        {"/lucene-issues.xml", 2, 60, 3},
+        {"/oak-issues.xml", 2, 60, 3},
     });
   }
 
@@ -63,8 +56,7 @@ public class JiraAnalysisToolTest {
   public void testExecution() throws Exception {
     URL resource = getClass().getResource(this.resource);
     File f = new File(resource.toURI());
-    String[] args = new String[] {f.getAbsolutePath(), epochs, layerSize, clusterCount,
-        maxIterationCount, distanceFunction, topN};
-    JiraAnalysisTool.main(args);
+    JiraAnalysisTool jiraAnalysisTool = new JiraAnalysisTool(f, epochs, layerSize, topN, false, true, false);
+    jiraAnalysisTool.execute();
   }
 }

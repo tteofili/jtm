@@ -52,7 +52,7 @@ public class JiraIssueXMLParserTest {
   public void testParse() throws Exception {
     URL resource = getClass().getResource(this.resource);
     File f = new File(resource.toURI());
-    JiraIssueXMLParser parser = new JiraIssueXMLParser(f.getAbsolutePath());
+    JiraIssueXMLParser parser = new JiraIssueXMLParser(f);
     final Map<String, JiraIssue> issues = parser.parse();
     assertEquals(1000, issues.size());
   }
