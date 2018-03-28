@@ -25,7 +25,7 @@
       <name>Feed</name>
       <version>1.0.0+</version>
       <fields>
-        <field>
+        <field xml.attribute="true">
           <name>version</name>
           <version>1.0.0+</version>
           <type>String</type>
@@ -73,9 +73,72 @@
           <version>1.0.0+</version>
           <type>String</type>
         </field>
+        <field xml.tagName="build-info">
+          <name>buildInfo</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>BuildInfo</type>
+            <multiplicity>1</multiplicity>
+          </association>
+        </field>
+        <field xml.tagName="issue">
+          <name>range</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>Range</type>
+            <multiplicity>1</multiplicity>
+          </association>
+        </field>
       </fields>
     </class>
 
+    <class java.toString="true">
+      <name>BuildInfo</name>
+      <version>1.0.0+</version>
+      <fields>
+        <field>
+          <name>version</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+        </field>
+        <field xml.tagName="build-number">
+          <name>buildNumber</name>
+          <version>1.0.0+</version>
+          <type>long</type>
+        </field>
+        <field xml.tagName="build-date" xml.format="dd-MM-yyyy">
+          <name>buildDate</name>
+          <version>1.0.0+</version>
+          <type>Date</type>
+        </field>
+      </fields>
+    </class>
+
+    <class java.toString="true">
+      <name>Range</name>
+      <version>1.0.0+</version>
+      <fields>
+        <field xml.attribute="true">
+          <name>start</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+        </field>
+        <field xml.attribute="true">
+          <name>end</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+        </field>
+        <field xml.attribute="true">
+          <name>total</name>
+          <version>1.0.0+</version>
+          <type>int</type>
+        </field>
+      </fields>
+    </class>
+
+    <!--
+     | see https://confluence.atlassian.com/jira062/displaying-search-results-in-xml-588581775.html
+    -->
     <class java.toString="true">
       <name>Issue</name>
       <version>1.0.0+</version>
@@ -112,7 +175,7 @@
           <name>key</name>
           <version>1.0.0+</version>
           <association>
-            <type>Key</type>
+            <type>Identifiable</type>
             <multiplicity>1</multiplicity>
           </association>
         </field>
@@ -123,6 +186,11 @@
         </field>
         <field>
           <name>type</name>
+          <version>1.0.0+</version>
+          <type>String</type>
+        </field>
+        <field>
+          <name>parent</name>
           <version>1.0.0+</version>
           <type>String</type>
         </field>
@@ -142,6 +210,14 @@
           <type>String</type>
         </field>
         <field>
+          <name>labels</name>
+          <version>1.0.0+</version>
+          <association java.init="constructor" xml.itemsStyle="wrapped">
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+        <field>
           <name>assignee</name>
           <version>1.0.0+</version>
           <association>
@@ -156,6 +232,11 @@
             <type>User</type>
             <multiplicity>1</multiplicity>
           </association>
+        </field>
+        <field>
+          <name>security</name>
+          <version>1.0.0+</version>
+          <type>String</type>
         </field>
         <field xml.format="E, d MMM yyyy hh:mm:ss Z">
           <name>created</name>
@@ -172,6 +253,21 @@
           <version>1.0.0+</version>
           <type>Date</type>
         </field>
+        <!--  due field is not often populated
+        <field xml.format="E, d MMM yyyy hh:mm:ss Z">
+          <name>due</name>
+          <version>1.0.0+</version>
+          <type>Date</type>
+        </field>
+         -->
+        <field>
+          <name>versions</name>
+          <version>1.0.0+</version>
+          <association java.init="constructor" xml.itemsStyle="flat">
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
         <field xml.tagName="fixversions">
           <name>fixVersions</name>
           <version>1.0.0+</version>
@@ -185,6 +281,14 @@
           <version>1.0.0+</version>
           <association java.init="constructor" xml.itemsStyle="wrapped">
             <type>Comment</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+        <field xml.tagName="subtasks">
+          <name>subTasks</name>
+          <version>1.0.0+</version>
+          <association java.init="constructor" xml.itemsStyle="wrapped">
+            <type>String</type>
             <multiplicity>*</multiplicity>
           </association>
         </field>
@@ -221,8 +325,8 @@
       </fields>
     </class>
 
-    <class xml.tagName="key" java.toString="true">
-      <name>Key</name>
+    <class java.toString="true">
+      <name>Identifiable</name>
       <version>1.0.0+</version>
       <fields>
         <field xml.attribute="true">
@@ -231,7 +335,7 @@
           <version>1.0.0+</version>
         </field>
         <field xml.content="true">
-          <name>name</name>
+          <name>value</name>
           <type>String</type>
           <version>1.0.0+</version>
         </field>
@@ -302,30 +406,36 @@
           <type>String</type>
         </field>
         <!-- TODO needs to be reviewed - is it text or composite? -->
-        <!-- field xml.tagName="customfieldvalues">
+        <field xml.tagName="customfieldvalues">
           <name>values</name>
           <version>1.0.0+</version>
           <association xml.itemsStyle="wrapped">
-            <type>CustomFieldValue</type>
-            <multiplicity>*</multiplicity>
+            <type>Values</type>
+            <multiplicity>1</multiplicity>
           </association>
-        </field -->
+        </field>
       </fields>
     </class>
 
     <class java.toString="true">
-      <name>CustomFieldValue</name>
+      <name>Values</name>
       <version>1.0.0+</version>
       <fields>
-        <field xml.attribute="true">
-          <name>id</name>
-          <type>long</type>
+        <field xml.tagName="customfieldvalues">
+          <name>identifiableValues</name>
           <version>1.0.0+</version>
+          <association java.init="constructor" xml.itemsStyle="flat">
+            <type>Identifiable</type>
+            <multiplicity>*</multiplicity>
+          </association>
         </field>
-        <field xml.content="true">
-          <name>value</name>
-          <type>String</type>
+        <field xml.tagName="labels">
+          <name>labels</name>
           <version>1.0.0+</version>
+          <association java.init="constructor" xml.itemsStyle="flat">
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
         </field>
       </fields>
     </class>
