@@ -6,11 +6,14 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import com.github.tteofili.jtm.feed.Feed;
+import com.github.tteofili.jtm.feed.IssuesCollection;
+import com.github.tteofili.jtm.feed.Range;
 
 @RunWith(Parameterized.class)
 public class JiraFeedStaxReaderTest{
@@ -24,17 +27,22 @@ public class JiraFeedStaxReaderTest{
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
-          {"/opennlp-issues.xml"},
-          {"/lucene-issues.xml"},
-          {"/oak-issues.xml"},
+          {"cq.xml"},
+          {"granite1.xml"},
+          {"npr.xml"},
       });
     }
 
     @Test
+    @Ignore
     public void testParse() throws Exception {
         InputStream input = getClass().getResourceAsStream(resource);
         Feed feed = new JiraFeedStaxReader().read(input, false);
         input.close();
-        assertEquals(1000, feed.getIssues().getIssues().size());
+
+        IssuesCollection issuesCollection = feed.getIssues();
+        Range range = issuesCollection.getRange();
+
+        assertEquals(range.getEnd() - range.getStart(), issuesCollection.getIssues().size());
     }
 }
