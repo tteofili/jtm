@@ -12,7 +12,7 @@
   <defaults>
     <default>
       <key>package</key>
-      <value>com.github.tteofili.jtm.feed</value>
+      <value>com.github.tteofili.jtm.feed.jira</value>
     </default>
     <default>
       <key>strictXmlAttributes</key>
