@@ -55,13 +55,10 @@
      | logs dir
     -->
     <fileSet>
-      <directory>${basedir}/src/main/assembly</directory>
+      <directory>${project.build.directory}/appassembler/logs/</directory>
       <outputDirectory>/logs</outputDirectory>
       <fileMode>666</fileMode>
       <directoryMode>755</directoryMode>
-      <excludes>
-        <exclude>*</exclude>
-      </excludes>
     </fileSet>
 
     <!--
@@ -83,9 +80,6 @@
     <fileSet>
       <directory>${project.build.directory}/appassembler/lib/</directory>
       <outputDirectory>/lib</outputDirectory>
-      <excludes>
-        <exclude>**/*.xml</exclude>
-      </excludes>
     </fileSet>
   </fileSets>
 

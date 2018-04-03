@@ -431,6 +431,10 @@
                         <configuration>
                             <repositoryLayout>flat</repositoryLayout>
                             <repositoryName>lib</repositoryName>
+                            <useWildcardClassPath>true</useWildcardClassPath>
+                            <logsDirectory>logs</logsDirectory>
+                            <showConsoleWindow>false</showConsoleWindow>
+                            <useTimestampInSnapshotFileName>true</useTimestampInSnapshotFileName>
                             <extraJvmArguments>-server -Dproject.artifactId=${project.artifactId} -Dproject.version=${project.version} -Dbuild.timestamp=${maven.build.timestamp} -Duser.timezone=UTC -Dfile.encoding=UTF-8</extraJvmArguments>
                             <defaultJvmSettings>-Xms500m -Xmx500m -XX:PermSize=128m -XX:-UseGCOverheadLimit</defaultJvmSettings>
                             <licenseHeaderFile>${basedir}/src/main/license/license-header.txt</licenseHeaderFile>
