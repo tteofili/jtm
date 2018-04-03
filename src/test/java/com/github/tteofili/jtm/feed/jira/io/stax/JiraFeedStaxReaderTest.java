@@ -1,4 +1,4 @@
-package com.github.tteofili.jtm.feed.io.stax;
+package com.github.tteofili.jtm.feed.jira.io.stax;
 
 import static org.junit.Assert.assertEquals;
 
@@ -11,9 +11,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.github.tteofili.jtm.feed.Feed;
-import com.github.tteofili.jtm.feed.IssuesCollection;
-import com.github.tteofili.jtm.feed.Range;
+import com.github.tteofili.jtm.feed.jira.Feed;
+import com.github.tteofili.jtm.feed.jira.IssuesCollection;
+import com.github.tteofili.jtm.feed.jira.Range;
 
 @RunWith(Parameterized.class)
 public class JiraFeedStaxReaderTest{
