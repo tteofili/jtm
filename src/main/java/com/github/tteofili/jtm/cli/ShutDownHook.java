@@ -19,34 +19,39 @@ final class ShutDownHook extends Thread {
     public void run() {
         // format the uptime string
 
-        Formatter uptime = new Formatter();
-        uptime.format( "Total uptime:" );
+        Formatter uptimeFormatter = new Formatter();
+        uptimeFormatter.format( "Total uptime:" );
 
-        long uptimeInSeconds = ( System.currentTimeMillis() - start ) / 1000;
-        final long hours = uptimeInSeconds / 3600;
+        long uptime = System.currentTimeMillis() - start;
+        if (uptime < 1000) {
+            uptimeFormatter.format( " %s millisecond%s", uptime, ( uptime > 1 ? "s" : "" ) );
+        } else {
+            long uptimeInSeconds = ( uptime ) / 1000;
+            final long hours = uptimeInSeconds / 3600;
 
-        if ( hours > 0 )
-        {
-            uptime.format( " %s hour%s", hours, ( hours > 1 ? "s" : "" ) );
+            if ( hours > 0 )
+            {
+                uptimeFormatter.format( " %s hour%s", hours, ( hours > 1 ? "s" : "" ) );
+            }
+
+            uptimeInSeconds = uptimeInSeconds - ( hours * 3600 );
+            final long minutes = uptimeInSeconds / 60;
+
+            if ( minutes > 0 )
+            {
+                uptimeFormatter.format( " %s minute%s", minutes, ( minutes > 1 ? "s" : "" ) );
+            }
+
+            uptimeInSeconds = uptimeInSeconds - ( minutes * 60 );
+
+            if ( uptimeInSeconds > 0 )
+            {
+                uptimeFormatter.format( " %s second%s", uptimeInSeconds, ( uptimeInSeconds > 1 ? "s" : "" ) );
+            }
         }
 
-        uptimeInSeconds = uptimeInSeconds - ( hours * 3600 );
-        final long minutes = uptimeInSeconds / 60;
-
-        if ( minutes > 0 )
-        {
-            uptime.format( " %s minute%s", minutes, ( minutes > 1 ? "s" : "" ) );
-        }
-
-        uptimeInSeconds = uptimeInSeconds - ( minutes * 60 );
-
-        if ( uptimeInSeconds > 0 )
-        {
-            uptime.format( " %s second%s", uptimeInSeconds, ( uptimeInSeconds > 1 ? "s" : "" ) );
-        }
-
-        log.info( uptime.toString() );
-        uptime.close();
+        log.info( uptimeFormatter.toString() );
+        uptimeFormatter.close();
 
         log.info( "Finished at: {}", new Date() );
 
