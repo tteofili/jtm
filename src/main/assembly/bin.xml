@@ -62,19 +62,6 @@
     </fileSet>
 
     <!--
-     | ext dir
-    -->
-    <fileSet>
-      <directory>${basedir}/src/main/assembly</directory>
-      <outputDirectory>/ext</outputDirectory>
-      <fileMode>666</fileMode>
-      <directoryMode>755</directoryMode>
-      <excludes>
-        <exclude>*</exclude>
-      </excludes>
-    </fileSet>
-
-    <!--
      | core libraries
     -->
     <fileSet>
