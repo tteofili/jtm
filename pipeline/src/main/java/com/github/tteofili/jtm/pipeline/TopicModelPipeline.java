@@ -40,14 +40,13 @@ import opennlp.tools.chunker.ChunkerME;
 import opennlp.tools.chunker.ChunkerModel;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
-import opennlp.tools.sentdetect.SentenceDetectorME;
 import opennlp.tools.sentdetect.SentenceModel;
 import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.tokenize.TokenizerME;
 import opennlp.tools.tokenize.TokenizerModel;
 import opennlp.tools.util.Span;
 
-public class UimaTestPipeline {
+public class TopicModelPipeline {
 
   private static final String TOKEN_TYPE = "opennlp.uima.Token";
   private static final String CHUNK_TYPE = "opennlp.uima.Chunk";
@@ -81,7 +80,7 @@ public class UimaTestPipeline {
     DataStreamSource<JiraIssue> jiraIssueDataStreamSource = env.fromCollection(issues.values());
 
     TypeSystemDescription typeSystemDesc = UimaUtil.createTypeSystemDescription(
-        UimaTestPipeline.class.getResourceAsStream("/TypeSystem.xml"));
+        TopicModelPipeline.class.getResourceAsStream("/TypeSystem.xml"));
 
     // create stream on CAS
     DataStream<CAS> casStream = jiraIssueDataStreamSource.map((MapFunction<JiraIssue, CAS>) issue -> {

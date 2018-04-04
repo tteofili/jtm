@@ -69,6 +69,7 @@
         <module>jira-reader</module>
         <module>core</module>
         <module>cli</module>
+        <module>pipeline</module>
     </modules>
 
     <scm>
