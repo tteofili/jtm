@@ -47,7 +47,7 @@
      | config files
     -->
     <fileSet>
-      <directory>${basedir}/src/main/resources</directory>
+      <directory>${basedir}/src/main/config</directory>
       <outputDirectory>/etc</outputDirectory>
     </fileSet>
 

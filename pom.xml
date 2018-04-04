@@ -1,3 +1,18 @@
+<!--
+ | Copyright 2018 Tommaso Teofili and Simone Tripodi
+ |
+ |  Licensed under the Apache License, Version 2.0 (the "License");
+ |  you may not use this file except in compliance with the License.
+ |  You may obtain a copy of the License at
+ |
+ |      http://www.apache.org/licenses/LICENSE-2.0
+ |
+ |  Unless required by applicable law or agreed to in writing, software
+ |  distributed under the License is distributed on an "AS IS" BASIS,
+ |  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ |  See the License for the specific language governing permissions and
+ |  limitations under the License.
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -6,9 +21,9 @@
     <groupId>com.github.teofili</groupId>
     <artifactId>jtm</artifactId>
     <version>0.1-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
-    <name>JTM</name>
+    <name>JTM :: Parent</name>
     <description>A basic tool for analysis of Atlassian Jira issues</description>
     <url>https://github.com/tteofili/jtm/</url>
     <inceptionYear>2018</inceptionYear>
@@ -49,6 +64,12 @@
         </developer>
     </developers>
 
+    <modules>
+        <module>jira-reader</module>
+        <module>core</module>
+        <module>cli</module>
+    </modules>
+
     <scm>
         <url>https://github.com/tteofili/jtm/</url>
         <connection>scm:git:ssh://github.com/tteofili/jtm.git</connection>
@@ -86,159 +107,18 @@
         <javac.src.version>1.8</javac.src.version>
         <javac.target.version>1.8</javac.target.version>
         <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ssZ</maven.build.timestamp.format>
-        <!--
-         | dependencies configuration
-        -->
-        <lucene.version>7.2.1</lucene.version>
-        <dl4j.version>0.9.1</dl4j.version>
-        <opennlp.version>1.8.4</opennlp.version>
-        <flink.version>1.3.2</flink.version>
-        <scala.version>2.11</scala.version>
     </properties>
 
-    <dependencies>
-        <!--
-         | CLI
-        -->
-        <dependency>
-            <groupId>info.picocli</groupId>
-            <artifactId>picocli</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-
-        <!--
-         | Logging
-        -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.25</version>
-        </dependency>
-
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>1.2.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>x-pack-transport</artifactId>
-            <version>6.2.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.opennlp</groupId>
-            <artifactId>opennlp-tools</artifactId>
-            <version>${opennlp.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-core</artifactId>
-            <version>${flink.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-streaming-java_${scala.version}</artifactId>
-            <version>${flink.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-cli</groupId>
-                    <artifactId>commons-cli</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.flink</groupId>
-            <artifactId>flink-runtime_${scala.version}</artifactId>
-            <version>${flink.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>commons-cli</groupId>
-                    <artifactId>commons-cli</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-test-framework</artifactId>
-            <version>${lucene.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!--<dependency>-->
-            <!--<groupId>org.apache.lucene</groupId>-->
-            <!--<artifactId>lucene-analyzers-opennlp</artifactId>-->
-            <!--<version>${lucene.version}</version>-->
-        <!--</dependency>-->
-
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-misc</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-core</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.lucene</groupId>
-            <artifactId>lucene-analyzers-common</artifactId>
-            <version>${lucene.version}</version>
-        </dependency>
- 
-        <dependency>
-            <groupId>org.apache.uima</groupId>
-            <artifactId>uimaj-core</artifactId>
-            <version>2.5.0</version>
-        </dependency>
- 
-        <dependency>
-            <groupId>org.deeplearning4j</groupId>
-            <artifactId>deeplearning4j-nlp</artifactId>
-            <version>${dl4j.version}</version>
-        </dependency>
- 
-        <dependency>
-            <groupId>org.nd4j</groupId>
-            <artifactId>nd4j-native</artifactId>
-            <version>${dl4j.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-collections4</artifactId>
-            <version>4.1</version>
-        </dependency>
-    </dependencies>
-
-    <repositories>
-        <!-- elasticsearch repo -->
-        <repository>
-            <id>elasticsearch-releases</id>
-            <url>https://artifacts.elastic.co/maven</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.11</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
         <pluginManagement>
@@ -332,53 +212,6 @@
             </plugin>
 
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>license-maven-plugin</artifactId>
-                <version>1.14</version>
-                <executions>
-                    <execution>
-                        <id>add-third-party</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>add-third-party</goal>
-                        </goals>
-                        <configuration>
-                            <fileTemplate>${basedir}/src/main/license/LICENSE-with-deps</fileTemplate>
-                            <thirdPartyFilename>LICENSE-with-deps</thirdPartyFilename>
-                            <sortArtifactByName>true</sortArtifactByName>
-                            <excludedScopes>test</excludedScopes>
-                            <licenseMerges>
-                                <licenseMerge>The Apache Software License, Version 2.0|Apache License, Version 2.0|Apache Public License 2.0</licenseMerge>
-                            </licenseMerges>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.modello</groupId>
-                <artifactId>modello-maven-plugin</artifactId>
-                <version>1.9.1</version>
-                <executions>
-                    <execution>
-                        <id>generate-sources</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>java</goal>
-                            <goal>stax-reader</goal>
-                        </goals>
-                        <configuration>
-                            <version>1.0.0</version>
-                            <useJava5>true</useJava5>
-                            <models>
-                                <model>src/main/mdo/jira-rss.mdo</model>
-                            </models>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
@@ -415,59 +248,6 @@
                             <X-Compile-Target-JDK>${javac.target.version}</X-Compile-Target-JDK>
                         </manifestEntries>
                     </archive>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>appassembler-maven-plugin</artifactId>
-                <version>2.0.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>assemble</goal>
-                        </goals>
-                        <configuration>
-                            <repositoryLayout>flat</repositoryLayout>
-                            <repositoryName>lib</repositoryName>
-                            <useWildcardClassPath>true</useWildcardClassPath>
-                            <logsDirectory>logs</logsDirectory>
-                            <showConsoleWindow>false</showConsoleWindow>
-                            <useTimestampInSnapshotFileName>true</useTimestampInSnapshotFileName>
-                            <extraJvmArguments>-server -Dproject.artifactId=${project.artifactId} -Dproject.version=${project.version} -Dbuild.timestamp=${maven.build.timestamp} -Duser.timezone=UTC -Dfile.encoding=UTF-8</extraJvmArguments>
-                            <defaultJvmSettings>-Xms500m -Xmx500m -XX:PermSize=128m -XX:-UseGCOverheadLimit</defaultJvmSettings>
-                            <licenseHeaderFile>${basedir}/src/main/license/license-header.txt</licenseHeaderFile>
-                            <programs>
-                                <program>
-                                    <mainClass>com.github.tteofili.jtm.cli.JtmCommand</mainClass>
-                                    <name>jtm</name>
-                                </program>
-                            </programs>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.3</version>
-                <executions>
-                    <execution>
-                        <id>assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <tarLongFileMode>gnu</tarLongFileMode>
-                    <appendAssemblyId>true</appendAssemblyId>
-                    <descriptors>
-                        <descriptor>${basedir}/src/main/assembly/bin.xml</descriptor>
-                    </descriptors>
                 </configuration>
             </plugin>
         </plugins>
