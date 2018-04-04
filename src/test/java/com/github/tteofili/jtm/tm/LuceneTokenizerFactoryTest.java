@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Tommaso Teofili
+ * Copyright 2018 Tommaso Teofili and Simone Tripodi
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.github.tteofili.jtm;
+package com.github.tteofili.jtm.tm;
 
 import java.util.List;
 
@@ -21,8 +21,10 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.charfilter.HTMLStripCharFilterFactory;
 import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
 import org.apache.lucene.analysis.custom.CustomAnalyzer;
-import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
+import org.apache.lucene.analysis.standard.ClassicTokenizerFactory;
 import org.junit.Test;
+
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests for {@link LuceneTokenizerFactory}
@@ -60,14 +62,13 @@ public class LuceneTokenizerFactoryTest {
   public void testSimpleAnalyzer() throws Exception {
     Analyzer simpleAnalyzer = CustomAnalyzer.builder()
         .addCharFilter(HTMLStripCharFilterFactory.class)
-        .withTokenizer(StandardTokenizerFactory.class)
+        .withTokenizer(ClassicTokenizerFactory.class)
         .addTokenFilter(LowerCaseFilterFactory.class)
-//        .addTokenFilter(WordDelimiterGraphFilterFactory.class)
         .build();
     LuceneTokenizerFactory tokenizerFactory = new LuceneTokenizerFactory(simpleAnalyzer);
     for (String testString : testStrings) {
       List<String> tokens = tokenizerFactory.create(testString).getTokens();
-      System.out.println(tokens);
+      assertNotNull(tokens);
     }
   }
 

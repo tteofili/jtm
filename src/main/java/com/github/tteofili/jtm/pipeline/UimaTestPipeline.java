@@ -2,13 +2,22 @@ package com.github.tteofili.jtm.pipeline;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
+import java.util.TreeSet;
 
+import com.github.tteofili.jtm.JiraAnalysisTool;
+import com.github.tteofili.jtm.JiraIssue;
+import com.github.tteofili.jtm.JiraIssueXMLParser;
+import org.apache.commons.lang.StringUtils;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.windowing.AllWindowFunction;
+import org.apache.flink.streaming.api.functions.windowing.RichAllWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 import org.apache.flink.util.Collector;
 import org.apache.uima.cas.CAS;
@@ -23,16 +32,16 @@ import org.deeplearning4j.models.embeddings.learning.impl.elements.SkipGram;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
-
-import com.github.tteofili.jtm.JiraAnalysisTool;
-import com.github.tteofili.jtm.JiraIssue;
-import com.github.tteofili.jtm.JiraIssueXMLParser;
+import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
+import org.nd4j.linalg.api.ndarray.INDArray;
 
 import opennlp.tools.chunker.Chunker;
 import opennlp.tools.chunker.ChunkerME;
 import opennlp.tools.chunker.ChunkerModel;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
+import opennlp.tools.sentdetect.SentenceDetectorME;
+import opennlp.tools.sentdetect.SentenceModel;
 import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.tokenize.TokenizerME;
 import opennlp.tools.tokenize.TokenizerModel;
@@ -43,10 +52,14 @@ public class UimaTestPipeline {
   private static final String TOKEN_TYPE = "opennlp.uima.Token";
   private static final String CHUNK_TYPE = "opennlp.uima.Chunk";
   private static final String POS_FEATURE_NAME = "pos";
+  private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
 
   public static void main(String[] args) throws Exception {
 
     // opennlp models
+
+    InputStream sentenceModelStream = JiraAnalysisTool.class.getResourceAsStream("/en-sent.bin");
+    SentenceModel sentdetectModel = new SentenceModel(sentenceModelStream);
 
     InputStream tokenizerModelStream = JiraAnalysisTool.class.getResourceAsStream("/en-token.bin");
     TokenizerModel tokenizerModel = new TokenizerModel(tokenizerModelStream);
@@ -77,19 +90,15 @@ public class UimaTestPipeline {
       return cas;
     });
 
-    AllWindowFunction<CAS, Embeddings, GlobalWindow> f = new AllWindowFunction<CAS, Embeddings, GlobalWindow>() {
+    RichAllWindowFunction<CAS, Embeddings, GlobalWindow> f = new RichAllWindowFunction<CAS, Embeddings, GlobalWindow>() {
       @Override
       public void apply(GlobalWindow window, Iterable<CAS> values, Collector<Embeddings> out) throws Exception {
 
-        // TODO : build iterator
-        for (CAS cas : values) {
+        LabelAwareIterator iterator = new CASLabelAwareIterator(values, CHUNK_TYPE);
 
-        }
-
-        int epochs = 3;
+        int epochs = 1;
         int layerSize = 100;
-        org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory tf = null;
-        LabelAwareIterator iterator = null;
+        org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory tf = new DefaultTokenizerFactory();
 
         // TODO : fetch embeddings models from somewhere (e.g. file system)
         Word2Vec word2Vec = new Word2Vec.Builder()
@@ -112,7 +121,7 @@ public class UimaTestPipeline {
             .build();
         paragraphVectors.fit();
 
-        Embeddings embeddings = new Embeddings(word2Vec, paragraphVectors);
+        Embeddings embeddings = new Embeddings(word2Vec, paragraphVectors, values);
 
         // TODO : store back updated embeddings somewhere (e.g. filesystem)
 
@@ -135,7 +144,6 @@ public class UimaTestPipeline {
         .map((MapFunction<CAS, CAS>) cas -> { // pos tag
           Type tokenType = cas.getTypeSystem().getType(TOKEN_TYPE);
           POSTaggerME tagger = new POSTaggerME(posModel);
-          int i = 0;
           FSIterator<AnnotationFS> iterator = cas.getAnnotationIndex(tokenType).iterator(false);
           while (iterator.hasNext()) {
             AnnotationFS next = iterator.next();
@@ -169,22 +177,110 @@ public class UimaTestPipeline {
 
           return cas;
         })
-        .countWindowAll(1000).apply(f)
-        // join on CAS and embeddings
-        .map((MapFunction<Embeddings, String>) value -> {
-          return null;
-        });
+        .countWindowAll(100).apply(f)
+        .map(new MapFunction<Embeddings, TreeSet<TopicCount>>() {
+
+          @Override
+          public TreeSet<TopicCount> map(Embeddings value) throws Exception {
+
+            POSTaggerME tagger = new POSTaggerME(posModel);
+            int topN = 3;
+            ParagraphVectors paragraphVectors = value.paragraphVectors;
+            Word2Vec word2vec = value.word2Vec;
+
+            TopicCounts topicCounts = new TopicCounts();
+            for (CAS cas : value.values) {
+              String key = cas.toString();
+              INDArray issueVector = paragraphVectors.getLookupTable().vector(key);
+
+              Collection<String> nearestWords = word2vec.wordsNearest(issueVector, topN);
+
+              Collection<String> nearestLabelsWords = new LinkedList<>();
+              for (String label : paragraphVectors.nearestLabels(issueVector, topN)) {
+                INDArray nearestIssueVector = paragraphVectors.getLookupTable().vector(label);
+                nearestLabelsWords.addAll(word2vec.wordsNearest(nearestIssueVector, topN));
+              }
+
+              nearestWords.addAll(nearestLabelsWords);
+
+              INDArray wordVectorsMean = word2vec.getWordVectorsMean(nearestWords);
+              Collection<String> topics = word2vec.wordsNearest(wordVectorsMean, topN);
+
+              Collection<String> toRemove = new LinkedList<>();
+              for (String t : topics) {
+                String[] tags = tagger.tag(new String[] {t});
+                String tag = tags[0];
+                boolean stopTag = Arrays.binarySearch(stopTags, tag) >= 0;
+                if (stopTag || StringUtils.isNumeric(t)) {
+                  toRemove.add(t);
+                }
+              }
+              topics.removeAll(toRemove);
+              topicCounts.add(topics);
+            }
+
+            return topicCounts.asSortedTopicSet();
+          }
+        }).print();
 
     env.execute();
   }
 
   private static class Embeddings {
-    private Word2Vec word2Vec;
-    private ParagraphVectors paragraphVectors;
+    private final Word2Vec word2Vec;
+    private final ParagraphVectors paragraphVectors;
+    private final Iterable<CAS> values;
 
-    public Embeddings(Word2Vec word2Vec, ParagraphVectors paragraphVectors) {
+    public Embeddings(Word2Vec word2Vec, ParagraphVectors paragraphVectors, Iterable<CAS> values) {
       this.word2Vec = word2Vec;
       this.paragraphVectors = paragraphVectors;
+      this.values = values;
     }
   }
+
+  private static class TopicCounts {
+
+    private final Map<String, TopicCount> counts = new HashMap<>();
+
+    public void add(Collection<String> topics) {
+      for (String t : topics) {
+        if (counts.containsKey(t)) {
+          counts.get(t).increment();
+        } else {
+          counts.put(t, new TopicCount(t));
+        }
+      }
+    }
+
+    private TreeSet<TopicCount> asSortedTopicSet() {
+      return new TreeSet<>(counts.values());
+    }
+
+  }
+
+  private static class TopicCount implements Comparable<TopicCount> {
+    private final String topic;
+    private Integer count;
+
+
+    private TopicCount(String topic) {
+      this.topic = topic;
+      this.count = 1;
+    }
+
+    public void increment() {
+      this.count++;
+    }
+
+    @Override
+    public int compareTo(TopicCount o) {
+      return this.count - o.count;
+    }
+
+    @Override
+    public String toString() {
+      return topic + " : " + count;
+    }
+  }
+
 }

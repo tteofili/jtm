@@ -13,13 +13,16 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
 */
-package com.github.tteofili.jtm;
+package com.github.tteofili.jtm.tm;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.github.tteofili.jtm.JiraComment;
+import com.github.tteofili.jtm.JiraIssue;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
@@ -30,9 +33,9 @@ import org.nd4j.linalg.factory.Nd4j;
 /**
  * Utility class for Par2Hier vector algorithms
  */
-class Par2HierUtils {
+public class Par2HierUtils {
 
-  enum Method {
+  public enum Method {
     CLUSTER,
     SUM
   }
@@ -49,11 +52,11 @@ class Par2HierUtils {
                                            WeightLookupTable<VocabWord> lookupTable,
                                            List<String> labels, int k, Method method) {
     Collections.sort(labels);
-    Map<String, JiraIssue> issues = iterator.getIssues();
+    Collection<JiraIssue> issues = iterator.getIssues();
 
     Map<String, INDArray> hvs = new TreeMap<>();
     // for each doc
-    for (JiraIssue issue : issues.values()) {
+    for (JiraIssue issue : issues) {
       Par2HierUtils.getPar2HierVector(lookupTable, issue, k, hvs, method);
     }
     return hvs;
