@@ -19,14 +19,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.Collection;
-import java.util.Date;
-import java.util.Formatter;
 import java.util.Map;
 
 import javax.xml.stream.XMLStreamException;
 
-import com.github.tteofili.jtm.tm.EmbeddingsTopicModel;
-import com.github.tteofili.jtm.tm.TopicModel;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
@@ -36,6 +32,9 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.tteofili.jtm.tm.EmbeddingsTopicModel;
+import com.github.tteofili.jtm.tm.TopicModel;
 /**
  * Tool for analyzing Jira issues exported as XML.
  *
