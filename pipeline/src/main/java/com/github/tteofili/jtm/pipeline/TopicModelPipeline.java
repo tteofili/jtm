@@ -2,6 +2,7 @@ package com.github.tteofili.jtm.pipeline;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import java.util.TreeSet;
 import com.github.tteofili.jtm.JiraAnalysisTool;
 import com.github.tteofili.jtm.JiraIssue;
 import com.github.tteofili.jtm.JiraIssueXMLParser;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -74,7 +76,10 @@ public class TopicModelPipeline {
 
     env.getConfig().registerTypeWithKryoSerializer(CASImpl.class, KryoCasSerializer.class);
 
-    JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(new File("src/test/resources/opennlp-issues.xml"));
+    URL resource = TopicModelPipeline.class.getResource("/opennlp-issues.xml");
+    File file = new File("/Users/teofili/dev/jtm/pipeline/src/test/resources/opennlp-issues.xml");
+
+    JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(file);
     Map<String, JiraIssue> issues = jiraIssueXMLParser.parse();
 
     DataStreamSource<JiraIssue> jiraIssueDataStreamSource = env.fromCollection(issues.values());
@@ -105,6 +110,7 @@ public class TopicModelPipeline {
             .epochs(epochs)
             .elementsLearningAlgorithm(new SkipGram<>())
             .layerSize(layerSize)
+            .useUnknown(true)
             .tokenizerFactory(tf)
             .build();
         word2Vec.fit();
@@ -116,6 +122,7 @@ public class TopicModelPipeline {
             .epochs(epochs)
             .layerSize(layerSize)
             .tokenizerFactory(tf)
+            .useUnknown(true)
             .useExistingWordVectors(word2Vec)
             .build();
         paragraphVectors.fit();
@@ -190,7 +197,12 @@ public class TopicModelPipeline {
             TopicCounts topicCounts = new TopicCounts();
             for (CAS cas : value.values) {
               String key = cas.toString();
-              INDArray issueVector = paragraphVectors.getLookupTable().vector(key);
+              INDArray issueVector;
+              try {
+                issueVector = paragraphVectors.getLookupTable().vector(key);
+              } catch (Throwable t) {
+                issueVector = paragraphVectors.inferVector(cas.getDocumentText());
+              }
 
               Collection<String> nearestWords = word2vec.wordsNearest(issueVector, topN);
 
