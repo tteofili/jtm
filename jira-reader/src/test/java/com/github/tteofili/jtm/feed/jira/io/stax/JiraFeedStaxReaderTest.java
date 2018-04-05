@@ -21,7 +21,6 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -42,14 +41,13 @@ public class JiraFeedStaxReaderTest{
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
       return Arrays.asList(new Object[][] {
-          {"cq.xml"},
-          {"granite1.xml"},
-          {"npr.xml"},
+          {"lucene-issues.xml"},
+          {"oak-issues.xml"},
+          {"opennlp-issues.xml"},
       });
     }
 
     @Test
-    @Ignore
     public void testParse() throws Exception {
         InputStream input = getClass().getResourceAsStream(resource);
         Feed feed = new JiraFeedStaxReader().read(input, false);
