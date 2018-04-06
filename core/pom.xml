@@ -35,10 +35,9 @@
         <!--
          | dependencies configuration
         -->
-        <lucene.version>7.2.1</lucene.version>
+        <lucene.version>7.3.0</lucene.version>
         <dl4j.version>0.9.1</dl4j.version>
         <opennlp.version>1.8.4</opennlp.version>
-        <scala.version>2.11</scala.version>
         <slf4j.version>1.7.25</slf4j.version>
     </properties>
 
@@ -68,11 +67,11 @@
             <scope>test</scope>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>org.apache.lucene</groupId>-->
-            <!--<artifactId>lucene-analyzers-opennlp</artifactId>-->
-            <!--<version>${lucene.version}</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-opennlp</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.lucene</groupId>

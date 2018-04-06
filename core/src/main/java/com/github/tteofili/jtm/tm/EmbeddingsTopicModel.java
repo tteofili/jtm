@@ -26,7 +26,11 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.charfilter.HTMLStripCharFilterFactory;
 import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
+import org.apache.lucene.analysis.core.TypeTokenFilterFactory;
 import org.apache.lucene.analysis.custom.CustomAnalyzer;
+import org.apache.lucene.analysis.opennlp.OpenNLPChunkerFilterFactory;
+import org.apache.lucene.analysis.opennlp.OpenNLPPOSFilterFactory;
+import org.apache.lucene.analysis.opennlp.OpenNLPTokenizerFactory;
 import org.apache.lucene.analysis.pattern.PatternReplaceFilterFactory;
 import org.apache.lucene.analysis.standard.ClassicTokenizerFactory;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
@@ -75,7 +79,7 @@ public class EmbeddingsTopicModel implements TopicModel {
     this.tagger = new POSTaggerME(posModel);
   }
 
-  public void fit(Collection<JiraIssue> issues) {
+  public void fit(Collection<JiraIssue> issues) throws IOException {
 
     assert issues != null;
 
@@ -83,18 +87,19 @@ public class EmbeddingsTopicModel implements TopicModel {
 
     JiraIterator iterator = new JiraIterator(issues, includeComments);
 
-//    String sentenceModel = "en-sent.bin";
-//    String tokenizerModel = "en-token.bin";
-//    String posModel = "en-pos-maxent.bin";
-//    String chunkerModel = "en-chunker.bin";
-//    Analyzer openNLPAnalyzer = CustomAnalyzer.builder()
-//        .addCharFilter(HTMLStripCharFilterFactory.class)
-//        .withTokenizer(OpenNLPTokenizerFactory.class,OpenNLPTokenizerFactory.SENTENCE_MODEL,
-//            sentenceModel,OpenNLPTokenizerFactory.TOKENIZER_MODEL, tokenizerModel)
-//        .addTokenFilter(OpenNLPPOSFilterFactory.class,OpenNLPPOSFilterFactory.POS_TAGGER_MODEL,posModel)
-//        .addTokenFilter(OpenNLPChunkerFilterFactory.class, OpenNLPChunkerFilterFactory.CHUNKER_MODEL, chunkerModel)
-//        .addTokenFilter(TypeTokenFilterFactory.class, "types", "types.txt", "useWhitelist", "true")
-//        .build();
+    String sentenceModel = "en-sent.bin";
+    String tokenizerModel = "en-token.bin";
+    String posModel = "en-pos-maxent.bin";
+    String chunkerModel = "en-chunker.bin";
+    Analyzer openNLPAnalyzer = CustomAnalyzer.builder()
+        .addCharFilter(HTMLStripCharFilterFactory.class)
+        .withTokenizer(OpenNLPTokenizerFactory.class, OpenNLPTokenizerFactory.SENTENCE_MODEL,
+            sentenceModel, OpenNLPTokenizerFactory.TOKENIZER_MODEL, tokenizerModel)
+        .addTokenFilter(LowerCaseFilterFactory.class)
+        .addTokenFilter(OpenNLPPOSFilterFactory.class, OpenNLPPOSFilterFactory.POS_TAGGER_MODEL, posModel)
+        .addTokenFilter(OpenNLPChunkerFilterFactory.class, OpenNLPChunkerFilterFactory.CHUNKER_MODEL, chunkerModel)
+        .addTokenFilter(TypeTokenFilterFactory.class, "types", "types.txt", "useWhitelist", "true")
+        .build();
 
     String revisionsPattern = "r\\d+";
     Analyzer simpleAnalyzer;
@@ -109,7 +114,7 @@ public class EmbeddingsTopicModel implements TopicModel {
       throw new RuntimeException(e);
     }
 
-    TokenizerFactory tf = new LuceneTokenizerFactory(simpleAnalyzer);
+    TokenizerFactory tf = new LuceneTokenizerFactory(openNLPAnalyzer);
 
     word2vec = new Word2Vec.Builder()
         .iterate(iterator)
