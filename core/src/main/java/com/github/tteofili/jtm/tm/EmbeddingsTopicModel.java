@@ -22,8 +22,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.github.tteofili.jtm.JiraAnalysisTool;
-import com.github.tteofili.jtm.JiraIssue;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.charfilter.HTMLStripCharFilterFactory;
@@ -37,6 +35,8 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.github.tteofili.jtm.JiraIssue;
 
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTagger;

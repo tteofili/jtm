@@ -21,14 +21,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.github.tteofili.jtm.JiraComment;
-import com.github.tteofili.jtm.JiraIssue;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.word2vec.VocabWord;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
+
+import com.github.tteofili.jtm.JiraComment;
+import com.github.tteofili.jtm.JiraIssue;
 
 /**
  * Utility class for Par2Hier vector algorithms

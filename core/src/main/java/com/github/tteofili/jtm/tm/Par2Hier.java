@@ -22,11 +22,6 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
 
-import com.github.tteofili.jtm.JiraIssue;
-import com.google.common.collect.Lists;
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.Setter;
 import org.apache.commons.lang.ArrayUtils;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.inmemory.InMemoryLookupTable;
@@ -42,6 +37,13 @@ import org.deeplearning4j.text.documentiterator.LabelsSource;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.ops.transforms.Transforms;
+
+import com.github.tteofili.jtm.JiraIssue;
+import com.google.common.collect.Lists;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 
 /**
  * Simplified version of Par2Hier implementation for DL4j for {@link JiraIssue}s

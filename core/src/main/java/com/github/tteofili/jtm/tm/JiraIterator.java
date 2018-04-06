@@ -21,11 +21,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.github.tteofili.jtm.JiraComment;
-import com.github.tteofili.jtm.JiraIssue;
 import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
 import org.deeplearning4j.text.documentiterator.LabelledDocument;
 import org.deeplearning4j.text.documentiterator.LabelsSource;
+
+import com.github.tteofili.jtm.JiraComment;
+import com.github.tteofili.jtm.JiraIssue;
 
 /**
  * DL4J {@link LabelAwareIterator} over {@link JiraIssue}s
