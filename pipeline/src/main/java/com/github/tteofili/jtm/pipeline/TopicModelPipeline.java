@@ -59,7 +59,6 @@ import opennlp.tools.chunker.ChunkerME;
 import opennlp.tools.chunker.ChunkerModel;
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTaggerME;
-import opennlp.tools.sentdetect.SentenceModel;
 import opennlp.tools.tokenize.Tokenizer;
 import opennlp.tools.tokenize.TokenizerME;
 import opennlp.tools.tokenize.TokenizerModel;
@@ -77,7 +76,8 @@ public class TopicModelPipeline {
     // opennlp models
 
     InputStream sentenceModelStream = JiraAnalysisTool.class.getResourceAsStream("/en-sent.bin");
-    SentenceModel sentdetectModel = new SentenceModel(sentenceModelStream);
+    // TODO is it useful?
+    // SentenceModel sentdetectModel = new SentenceModel(sentenceModelStream);
 
     InputStream tokenizerModelStream = JiraAnalysisTool.class.getResourceAsStream("/en-token.bin");
     TokenizerModel tokenizerModel = new TokenizerModel(tokenizerModelStream);
