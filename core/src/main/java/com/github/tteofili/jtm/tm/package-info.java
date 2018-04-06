@@ -15,6 +15,6 @@
  */
 
 /**
- * JTM CLI implementation.
+ * JTM Topic Model definition.
  */
-package com.github.tteofili.jtm.cli;
+package com.github.tteofili.jtm.tm;

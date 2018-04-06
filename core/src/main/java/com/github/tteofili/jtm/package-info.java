@@ -15,6 +15,6 @@
  */
 
 /**
- * JTM CLI implementation.
+ * Core JTM APIs definition and implementation.
  */
-package com.github.tteofili.jtm.cli;
+package com.github.tteofili.jtm;
