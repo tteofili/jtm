@@ -51,7 +51,7 @@ public class KryoCasSerializer extends Serializer<CAS> {
   }
 
   @Override
-  public CAS read(Kryo kryo, Input input, Class type) {
+  public CAS read(Kryo kryo, Input input, Class<CAS> type) {
 
     CASCompleteSerializer casSerializer =
         (CASCompleteSerializer) javaSerializer.read(kryo, input, CASCompleteSerializer.class);
