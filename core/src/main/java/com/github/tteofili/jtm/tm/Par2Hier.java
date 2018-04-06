@@ -30,6 +30,7 @@ import org.deeplearning4j.models.embeddings.learning.impl.sequence.DM;
 import org.deeplearning4j.models.embeddings.reader.impl.BasicModelUtils;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.models.sequencevectors.sequence.Sequence;
+import org.deeplearning4j.models.sequencevectors.sequence.SequenceElement;
 import org.deeplearning4j.models.word2vec.VocabWord;
 import org.deeplearning4j.models.word2vec.wordstore.VocabCache;
 import org.deeplearning4j.text.documentiterator.LabelledDocument;
@@ -50,6 +51,9 @@ import lombok.Setter;
  *
  */
 public class Par2Hier extends ParagraphVectors {
+
+  private static final long serialVersionUID = 1383866565833005689L;
+
   @Getter
   protected LabelsSource labelsSource;
   @Getter
@@ -71,7 +75,9 @@ public class Par2Hier extends ParagraphVectors {
     this.labelAwareIterator = (JiraIterator) paragraphVectors.getLabelAwareIterator();
     this.vocab = paragraphVectors.getVocab();
 
-    this.lookupTable = rebuildLookupTable(paragraphVectors.lookupTable(), this.vocab);
+    @SuppressWarnings("unchecked") // verified in source code
+    WeightLookupTable<? extends SequenceElement> parLT = paragraphVectors.lookupTable();
+    this.lookupTable = rebuildLookupTable(parLT, this.vocab);
 
     this.tokenizerFactory = paragraphVectors.getTokenizerFactory();
     this.modelUtils = paragraphVectors.getModelUtils();
@@ -82,7 +88,7 @@ public class Par2Hier extends ParagraphVectors {
 
   }
 
-  private static WeightLookupTable<VocabWord> rebuildLookupTable(WeightLookupTable parLT, VocabCache<VocabWord> vocabCache) {
+  private static <T extends SequenceElement> WeightLookupTable<VocabWord> rebuildLookupTable(WeightLookupTable<T> parLT, VocabCache<VocabWord> vocabCache) {
     WeightLookupTable<VocabWord> lookupTable = new InMemoryLookupTable.Builder<VocabWord>()
         .vectorLength(parLT.layerSize()).cache(vocabCache).build();
     lookupTable.resetWeights();

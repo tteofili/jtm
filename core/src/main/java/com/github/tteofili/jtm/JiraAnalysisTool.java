@@ -94,8 +94,8 @@ public class JiraAnalysisTool {
           .put("cluster.name", "elasticsearch")
           .put("xpack.security.user", "elastic:Q96HdxDpHMH2p9TrMvqA")
           .build();
-      TransportClient client = new PreBuiltXPackTransportClient(settings)
-          .addTransportAddresses(new TransportAddress(InetAddress.getByName("localhost"), 9300));
+      TransportClient client = new PreBuiltXPackTransportClient(settings);
+      client.addTransportAddresses(new TransportAddress(InetAddress.getByName("localhost"), 9300));
 
       String indexName = issues.values().iterator().next().getProjectId().toLowerCase();
 

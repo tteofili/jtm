@@ -152,7 +152,7 @@ public class JiraIssueXMLParser {
             String commentId = null;
             String author = null;
             String commentCreated = null;
-            Iterator attributes = element.getAttributes();
+            Iterator<?> attributes = element.getAttributes();
             while (attributes.hasNext()) {
               Attribute next = (Attribute) attributes.next();
               if ("id".equals(next.getName().toString())) {

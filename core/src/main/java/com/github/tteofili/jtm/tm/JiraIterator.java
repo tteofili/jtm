@@ -146,8 +146,6 @@ public class JiraIterator implements LabelAwareIterator {
     final Iterator<JiraComment> iterator = commentsList.iterator();
     return new LabelAwareIterator() {
 
-      LabelsSource labelsSource = new LabelsSource();
-
       @Override
       public boolean hasNextDocument() {
         return iterator.hasNext();
