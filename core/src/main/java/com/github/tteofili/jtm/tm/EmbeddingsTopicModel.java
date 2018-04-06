@@ -102,14 +102,13 @@ public class EmbeddingsTopicModel implements TopicModel {
         .build();
 
     String revisionsPattern = "r\\d+";
-    Analyzer simpleAnalyzer;
     try {
-      simpleAnalyzer = CustomAnalyzer.builder()
-          .addCharFilter(HTMLStripCharFilterFactory.class)
-          .withTokenizer(ClassicTokenizerFactory.class)
-          .addTokenFilter(LowerCaseFilterFactory.class)
-          .addTokenFilter(PatternReplaceFilterFactory.class, "pattern", revisionsPattern, "replacement", "", "replace", "all")
-          .build();
+      CustomAnalyzer.builder()
+                    .addCharFilter(HTMLStripCharFilterFactory.class)
+                    .withTokenizer(ClassicTokenizerFactory.class)
+                    .addTokenFilter(LowerCaseFilterFactory.class)
+                    .addTokenFilter(PatternReplaceFilterFactory.class, "pattern", revisionsPattern, "replacement", "", "replace", "all")
+                    .build();
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
