@@ -75,8 +75,8 @@ public class TopicModelPipeline {
 
     // opennlp models
 
-    InputStream sentenceModelStream = JiraAnalysisTool.class.getResourceAsStream("/en-sent.bin");
-    // TODO is it useful?
+    // TODO are they useful?
+    // InputStream sentenceModelStream = JiraAnalysisTool.class.getResourceAsStream("/en-sent.bin");
     // SentenceModel sentdetectModel = new SentenceModel(sentenceModelStream);
 
     InputStream tokenizerModelStream = JiraAnalysisTool.class.getResourceAsStream("/en-token.bin");
