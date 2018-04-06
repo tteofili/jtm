@@ -25,27 +25,28 @@ import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
 import org.deeplearning4j.text.documentiterator.LabelledDocument;
 import org.deeplearning4j.text.documentiterator.LabelsSource;
 
-import com.github.tteofili.jtm.JiraComment;
-import com.github.tteofili.jtm.JiraIssue;
+import com.github.tteofili.jtm.feed.jira.Comment;
+import com.github.tteofili.jtm.feed.jira.Issue;
+import com.google.common.base.Joiner;
 
 /**
- * DL4J {@link LabelAwareIterator} over {@link JiraIssue}s
+ * DL4J {@link LabelAwareIterator} over {@link Issue}s
  */
 public class JiraIterator implements LabelAwareIterator {
 
-  private final Collection<JiraIssue> issues;
+  private final Collection<Issue> issues;
   private final boolean includeComments;
-  private final List<JiraComment> commentsList;
+  private final List<Comment> commentsList;
 
-  private JiraIssue currentIssue;
-  private Iterator<JiraIssue> issuesIterator;
-  private Iterator<JiraComment> commentIterator;
+  private Issue currentIssue;
+  private Iterator<Issue> issuesIterator;
+  private Iterator<Comment> commentIterator;
 
   private String currentLabel = null;
   private LabelsSource labelSource;
 
 
-  public JiraIterator(Collection<JiraIssue> issues, boolean includeComments) {
+  public JiraIterator(Collection<Issue> issues, boolean includeComments) {
     this.issues = issues;
     this.includeComments = includeComments;
     this.commentsList = new LinkedList<>();
@@ -56,10 +57,10 @@ public class JiraIterator implements LabelAwareIterator {
   private LabelsSource extractLabels() {
     List<String> labels = new LinkedList<>();
 
-    for (JiraIssue issue : issues) {
-      labels.add(issue.getId());
+    for (Issue issue : issues) {
+      labels.add(issue.getKey().getValue());
       if (includeComments) {
-        for (JiraComment jiraComment : issue.getComments()) {
+        for (Comment jiraComment : issue.getComments()) {
           labels.add(jiraComment.getId());
         }
       }
@@ -78,16 +79,19 @@ public class JiraIterator implements LabelAwareIterator {
   private String nextSentence() {
     String sentence;
     if (includeComments && commentIterator != null && commentIterator.hasNext()) {
-      JiraComment jiraComment = commentIterator.next();
+      Comment jiraComment = commentIterator.next();
       currentLabel = jiraComment.getId();
       sentence = jiraComment.toString();
     } else {
       currentIssue = issuesIterator.next();
-      List<JiraComment> comments = currentIssue.getComments();
+      List<Comment> comments = currentIssue.getComments();
       this.commentsList.addAll(comments);
       commentIterator = comments.iterator();
-      currentLabel = currentIssue.getId();
-      sentence = currentIssue.asString();
+      currentLabel = currentIssue.getKey().getValue();
+      sentence = Joiner.on(' ').join(currentIssue.getLabels(),
+                                     currentIssue.getTitle(),
+                                     currentIssue.getDescription(),
+                                     currentIssue.getSummary());
     }
 
     return sentence;
@@ -138,12 +142,12 @@ public class JiraIterator implements LabelAwareIterator {
     currentIssue = null;
   }
 
-  public Collection<JiraIssue> getIssues() {
+  public Collection<Issue> getIssues() {
     return issues;
   }
 
   LabelAwareIterator commentsIterator() {
-    final Iterator<JiraComment> iterator = commentsList.iterator();
+    final Iterator<Comment> iterator = commentsList.iterator();
     return new LabelAwareIterator() {
 
       @Override
@@ -153,7 +157,7 @@ public class JiraIterator implements LabelAwareIterator {
 
       @Override
       public LabelledDocument nextDocument() {
-        JiraComment next = iterator.next();
+        Comment next = iterator.next();
         LabelledDocument document = new LabelledDocument();
         String id = next.getId();
         labelSource.storeLabel(id);

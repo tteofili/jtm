@@ -40,7 +40,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.tteofili.jtm.JiraIssue;
+import com.github.tteofili.jtm.feed.jira.Issue;
 
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTagger;
@@ -79,7 +79,7 @@ public class EmbeddingsTopicModel implements TopicModel {
     this.tagger = new POSTaggerME(posModel);
   }
 
-  public void fit(Collection<JiraIssue> issues) throws IOException {
+  public void fit(Collection<Issue> issues) throws IOException {
 
     assert issues != null;
 

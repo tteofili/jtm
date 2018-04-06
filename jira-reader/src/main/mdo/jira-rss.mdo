@@ -291,6 +291,14 @@
             <multiplicity>*</multiplicity>
           </association>
         </field>
+        <field xml.tagName="components">
+          <name>components</name>
+          <version>1.0.0+</version>
+          <association java.init="constructor" xml.itemsStyle="flat">
+            <type>String</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
         <field java.setter="false">
           <name>comments</name>
           <version>1.0.0+</version>
@@ -312,6 +320,17 @@
           <version>1.0.0+</version>
           <association java.init="constructor" xml.itemsStyle="wrapped">
             <type>CustomField</type>
+            <multiplicity>*</multiplicity>
+          </association>
+        </field>
+        <!--
+         | topics field is required for indexing
+        -->
+        <field>
+          <name>topics</name>
+          <version>1.0.0+</version>
+          <association>
+            <type>String</type>
             <multiplicity>*</multiplicity>
           </association>
         </field>
@@ -420,7 +439,6 @@
           <version>1.0.0+</version>
           <type>String</type>
         </field>
-        <!-- TODO needs to be reviewed - is it text or composite? -->
         <field xml.tagName="customfieldvalues">
           <name>values</name>
           <version>1.0.0+</version>

@@ -1,6 +1,7 @@
 package com.github.tteofili.jtm.pipeline;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,9 +10,6 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeSet;
 
-import com.github.tteofili.jtm.JiraAnalysisTool;
-import com.github.tteofili.jtm.JiraIssue;
-import com.github.tteofili.jtm.JiraIssueXMLParser;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -34,6 +32,12 @@ import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.nd4j.linalg.api.ndarray.INDArray;
+
+import com.github.tteofili.jtm.JiraAnalysisTool;
+import com.github.tteofili.jtm.feed.jira.Feed;
+import com.github.tteofili.jtm.feed.jira.Issue;
+import com.github.tteofili.jtm.feed.jira.io.stax.JiraFeedStaxReader;
+import com.google.common.base.Joiner;
 
 import opennlp.tools.chunker.Chunker;
 import opennlp.tools.chunker.ChunkerME;
@@ -79,19 +83,23 @@ public class TopicModelPipeline {
       System.exit(-1);
     }
     File file = new File(exportPath);
+    FileInputStream stream = new FileInputStream(file);
+    Feed feed = new JiraFeedStaxReader().read(stream, false );
+    stream.close();
 
-    JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(file);
-    Map<String, JiraIssue> issues = jiraIssueXMLParser.parse();
-
-    DataStreamSource<JiraIssue> jiraIssueDataStreamSource = env.fromCollection(issues.values());
+    DataStreamSource<Issue> jiraIssueDataStreamSource = env.fromCollection(feed.getIssues().getIssues());
 
     TypeSystemDescription typeSystemDesc = UimaUtil.createTypeSystemDescription(
         TopicModelPipeline.class.getResourceAsStream("/TypeSystem.xml"));
 
     // create stream on CAS
-    DataStream<CAS> casStream = jiraIssueDataStreamSource.map((MapFunction<JiraIssue, CAS>) issue -> {
+    DataStream<CAS> casStream = jiraIssueDataStreamSource.map((MapFunction<Issue, CAS>) issue -> {
       CAS cas = UimaUtil.createEmptyCAS(typeSystemDesc);
-      cas.setDocumentText(issue.asString());
+      String documentText = Joiner.on(' ').join(issue.getLabels(),
+                                                issue.getTitle(),
+                                                issue.getDescription(),
+                                                issue.getSummary());
+      cas.setDocumentText(documentText);
       return cas;
     });
 

@@ -28,8 +28,8 @@ import org.deeplearning4j.models.word2vec.VocabWord;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
-import com.github.tteofili.jtm.JiraComment;
-import com.github.tteofili.jtm.JiraIssue;
+import com.github.tteofili.jtm.feed.jira.Comment;
+import com.github.tteofili.jtm.feed.jira.Issue;
 
 /**
  * Utility class for Par2Hier vector algorithms
@@ -53,11 +53,11 @@ public class Par2HierUtils {
                                            WeightLookupTable<VocabWord> lookupTable,
                                            List<String> labels, int k, Method method) {
     Collections.sort(labels);
-    Collection<JiraIssue> issues = iterator.getIssues();
+    Collection<Issue> issues = iterator.getIssues();
 
     Map<String, INDArray> hvs = new TreeMap<>();
     // for each doc
-    for (JiraIssue issue : issues) {
+    for (Issue issue : issues) {
       Par2HierUtils.getPar2HierVector(lookupTable, issue, k, hvs, method);
     }
     return hvs;
@@ -67,22 +67,22 @@ public class Par2HierUtils {
    * base case: on a leaf hv = pv
    * on a non-leaf node with n children: hv = pv + k centroids of the n hv
    */
-  private static void getPar2HierVector(WeightLookupTable<VocabWord> lookupTable, JiraIssue issue,
+  private static void getPar2HierVector(WeightLookupTable<VocabWord> lookupTable, Issue issue,
                                         int k, Map<String, INDArray> hvs, Method method) {
-    if (hvs.containsKey(issue.getId())) {
-      hvs.get(issue.getId());
+    if (hvs.containsKey(issue.getKey().getValue())) {
+      hvs.get(issue.getKey().getValue());
       return;
     }
-    INDArray hv = lookupTable.vector(issue.getId());
+    INDArray hv = lookupTable.vector(issue.getKey().getValue());
 
-    List<JiraComment> comments = issue.getComments();
+    List<Comment> comments = issue.getComments();
     if (comments.size() == 0) {
       // just the pv
-      hvs.put(issue.getId(), hv);
+      hvs.put(issue.getKey().getValue(), hv);
     } else {
       INDArray chvs = Nd4j.zeros(comments.size(), hv.columns());
       int i = 0;
-      for (JiraComment desc : comments) {
+      for (Comment desc : comments) {
         // child hierarchical vector
         INDArray chv = lookupTable.vector(desc.getId());
         chvs.putRow(i, chv);
@@ -113,7 +113,7 @@ public class Par2HierUtils {
           break;
       }
 
-      hvs.put(issue.getId(), hv);
+      hvs.put(issue.getKey().getValue(), hv);
     }
   }
 

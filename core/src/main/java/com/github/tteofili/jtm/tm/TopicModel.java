@@ -18,7 +18,7 @@ package com.github.tteofili.jtm.tm;
 import java.io.IOException;
 import java.util.Collection;
 
-import com.github.tteofili.jtm.JiraIssue;
+import com.github.tteofili.jtm.feed.jira.Issue;
 
 /**
  * Topic modeling API for training and inference
@@ -29,7 +29,7 @@ public interface TopicModel {
    * Fit the model with respect to the given issues
    * @param issues the Jira issues
    */
-  void fit(Collection<JiraIssue> issues) throws IOException;
+  void fit(Collection<Issue> issues) throws IOException;
 
   /**
    * Extract top {@code n} topics for the document having the given identifier

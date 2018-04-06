@@ -16,11 +16,15 @@
 package com.github.tteofili.jtm.cli;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.tteofili.jtm.JiraAnalysisTool;
+import com.github.tteofili.jtm.feed.jira.io.stax.JiraFeedStaxReader;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
@@ -142,17 +146,27 @@ public class JtmCommand
 
         int status = 1;
         Throwable error = null;
+        InputStream input = null;
         try {
-            new JiraAnalysisTool( command.exportedJiraFeed,
-                                  command.epochs,
+            input = new FileInputStream(command.exportedJiraFeed);
+
+            new JiraAnalysisTool( command.epochs,
                                   command.layerSize,
                                   command.topN,
                                   command.hierarchicalVectors,
                                   command.includeComments,
-                                  command.index ).execute();
+                                  command.index ).analyze(new JiraFeedStaxReader().read(input, false));
         } catch (Throwable t) {
             status = -1;
             error = t;
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    // nothing to do, swallow it
+                }
+            }
         }
 
         log.info( "+-----------------------------------------------------+" );

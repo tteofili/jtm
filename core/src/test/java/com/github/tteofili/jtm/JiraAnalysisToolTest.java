@@ -15,14 +15,16 @@
  */
 package com.github.tteofili.jtm;
 
-import java.io.File;
-import java.net.URL;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+
+import com.github.tteofili.jtm.feed.jira.Feed;
+import com.github.tteofili.jtm.feed.jira.io.stax.JiraFeedStaxReader;
 
 /**
  * Tests for {@link JiraAnalysisTool}
@@ -54,9 +56,10 @@ public class JiraAnalysisToolTest {
 
   @Test
   public void testExecution() throws Exception {
-    URL resource = getClass().getResource(this.resource);
-    File f = new File(resource.toURI());
-    JiraAnalysisTool jiraAnalysisTool = new JiraAnalysisTool(f, epochs, layerSize, topN, false, true, false);
-    jiraAnalysisTool.execute();
+    JiraAnalysisTool jiraAnalysisTool = new JiraAnalysisTool(epochs, layerSize, topN, false, true, false);
+    InputStream inputStream = getClass().getResourceAsStream(resource);
+    Feed feed = new JiraFeedStaxReader().read(inputStream, false);
+    jiraAnalysisTool.analyze(feed);
+    inputStream.close();
   }
 }

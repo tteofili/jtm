@@ -15,13 +15,11 @@
  */
 package com.github.tteofili.jtm;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
-
-import javax.xml.stream.XMLStreamException;
+import java.util.List;
 
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.transport.TransportClient;
@@ -33,6 +31,8 @@ import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.tteofili.jtm.feed.jira.Feed;
+import com.github.tteofili.jtm.feed.jira.Issue;
 import com.github.tteofili.jtm.tm.EmbeddingsTopicModel;
 import com.github.tteofili.jtm.tm.TopicModel;
 /**
@@ -42,8 +42,6 @@ import com.github.tteofili.jtm.tm.TopicModel;
 public class JiraAnalysisTool {
 
   private static final Logger log = LoggerFactory.getLogger(JiraAnalysisTool.class);
-
-  private final File exportedJiraFeed;
 
   private final int epochs;
 
@@ -57,14 +55,12 @@ public class JiraAnalysisTool {
 
   private final boolean index;
 
-  public JiraAnalysisTool(File exportedJiraFeed,
-                          int epochs,
+  public JiraAnalysisTool(int epochs,
                           int layerSize,
                           int topN,
                           boolean hierarchicalVectors,
                           boolean includeComments,
                           boolean index) {
-    this.exportedJiraFeed = exportedJiraFeed;
     this.epochs = epochs;
     this.layerSize = layerSize;
     this.topN = topN;
@@ -73,19 +69,21 @@ public class JiraAnalysisTool {
     this.index = index;
   }
 
-  public void execute() throws IOException, XMLStreamException {
+  public void analyze(Feed feed) throws IOException {
+    log.info("Analysing feed {} ({})",
+             feed.getIssues().getTitle(),
+             feed.getIssues().getBuildInfo());
 
-    JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(exportedJiraFeed);
-    Map<String, JiraIssue> issues = jiraIssueXMLParser.parse();
+    Collection<Issue> issues = feed.getIssues().getIssues();
 
     log.info("{} issues parsed", issues.size());
 
     TopicModel topicModel = new EmbeddingsTopicModel(epochs, layerSize, hierarchicalVectors, includeComments);
-    topicModel.fit(issues.values());
+    topicModel.fit(issues);
 
-    for (JiraIssue issue : issues.values()) {
-      Collection<String> topics = topicModel.extractTopics(topN, issue.getId());
-      issue.addTopics(topics);
+    for (Issue issue : feed.getIssues().getIssues()) {
+      List<String> topics = new ArrayList<>(topicModel.extractTopics(topN, issue.getKey().getValue()));
+      issue.setTopics(topics);
       log.info("{} : {}", issue.getTitle(), topics);
     }
 
@@ -97,7 +95,7 @@ public class JiraAnalysisTool {
       TransportClient client = new PreBuiltXPackTransportClient(settings);
       client.addTransportAddresses(new TransportAddress(InetAddress.getByName("localhost"), 9300));
 
-      String indexName = issues.values().iterator().next().getProjectId().toLowerCase();
+      String indexName = feed.getIssues().getTitle().toLowerCase();
 
 //      try {
 //        BulkByScrollResponse bulk =
@@ -114,32 +112,32 @@ public class JiraAnalysisTool {
 
       String type = "doc";
       try {
-        for (JiraIssue issue : issues.values()) {
+        for (Issue issue : issues) {
 
           XContentBuilder jsonBuilder = XContentFactory.jsonBuilder()
               .startObject()
-              .field("id", issue.getId())
+              .field("id", issue.getKey().getValue())
               .field("assignee", issue.getAssignee())
-              .field("component", issue.getComponent())
+              .field("components", issue.getComponents())
               .field("created", issue.getCreated())
               .field("description", issue.getDescription())
               .field("labels", issue.getLabels())
               .field("link", issue.getLink())
-              .field("projectId", issue.getProjectId())
+              .field("projectId", issue.getProject().getName())
               .field("reporter", issue.getReporter())
               .field("resolution", issue.getResolution())
               .field("summary", issue.getSummary())
               .field("title", issue.getTitle())
               .field("topics", issue.getTopics())
-              .field("typeId", issue.getTypeId())
+              .field("typeId", issue.getType())
               .field("updated", issue.getUpdated())
               .endObject();
 
-          IndexResponse response = client.prepareIndex(indexName, type, issue.getId())
+          IndexResponse response = client.prepareIndex(indexName, type, issue.getKey().getValue())
               .setSource(jsonBuilder)
               .get();
 
-          log.info("indexing {} : {}", issue.getId(), response.status());
+          log.info("indexing {} : {}", issue.getKey().getValue(), response.status());
         }
       } finally {
         client.close();
