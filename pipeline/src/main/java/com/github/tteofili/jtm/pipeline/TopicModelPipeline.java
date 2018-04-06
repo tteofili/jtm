@@ -2,7 +2,6 @@ package com.github.tteofili.jtm.pipeline;
 
 import java.io.File;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -13,7 +12,6 @@ import java.util.TreeSet;
 import com.github.tteofili.jtm.JiraAnalysisTool;
 import com.github.tteofili.jtm.JiraIssue;
 import com.github.tteofili.jtm.JiraIssueXMLParser;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -76,8 +74,11 @@ public class TopicModelPipeline {
 
     env.getConfig().registerTypeWithKryoSerializer(CASImpl.class, KryoCasSerializer.class);
 
-    URL resource = TopicModelPipeline.class.getResource("/opennlp-issues.xml");
-    File file = new File("/Users/teofili/dev/jtm/pipeline/src/test/resources/opennlp-issues.xml");
+    String exportPath = args[0];
+    if (exportPath == null || exportPath.trim().length() == 0) {
+      System.exit(-1);
+    }
+    File file = new File(exportPath);
 
     JiraIssueXMLParser jiraIssueXMLParser = new JiraIssueXMLParser(file);
     Map<String, JiraIssue> issues = jiraIssueXMLParser.parse();
