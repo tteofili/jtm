@@ -51,6 +51,7 @@
                         <goals>
                             <goal>java</goal>
                             <goal>stax-reader</goal>
+                            <goal>stax-writer</goal>
                         </goals>
                         <configuration>
                             <version>1.0.0</version>

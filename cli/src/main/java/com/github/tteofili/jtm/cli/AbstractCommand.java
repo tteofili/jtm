@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018 Tommaso Teofili and Simone Tripodi
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.github.tteofili.jtm.cli;
 
 import java.io.File;
@@ -21,7 +36,7 @@ import picocli.CommandLine.Parameters;
 
 abstract class AbstractCommand implements Runnable, AnalysisTool {
 
-    private static final Logger log = LoggerFactory.getLogger(AbstractCommand.class);
+    protected static final Logger log = LoggerFactory.getLogger(AbstractCommand.class);
 
     @Option(names = { "-h", "--help" }, usageHelp = true, description = "Display the usage message.")
     private boolean helpRequested = false;
@@ -67,8 +82,6 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
         // assume SLF4J is bound to logback in the current environment
         final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
 
-        // GO!!!
-
         try
         {
             JoranConfigurator configurator = new JoranConfigurator();
@@ -83,6 +96,8 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
             // StatusPrinter should handle this
         }
 
+        // GO!!!
+
         log.info( "                         ''~``" );
         log.info( "                        ( o o )" );
         log.info( "+------------------.oooO--(_)--Oooo.------------------+" );
@@ -96,23 +111,27 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
         Throwable error = null;
         InputStream input = null;
         Feed feed = null;
-        dance : for (File exportedJiraFeed : exportedJiraFeeds) {
-            try {
+
+        try {
+            setUp();
+
+            for (File exportedJiraFeed : exportedJiraFeeds) {
                 input = new FileInputStream(exportedJiraFeed);
                 feed = feedReader.read(input, false);
 
                 analyze(feed);
-            } catch (Throwable t) {
-                status = -1;
-                error = t;
-                break dance;
-            } finally {
-                if (input != null) {
-                    try {
-                        input.close();
-                    } catch (IOException e) {
-                        // nothing to do, swallow it
-                    }
+            }
+
+            tearDown();
+        } catch (Throwable t) {
+            status = -1;
+            error = t;
+        } finally {
+            if (input != null) {
+                try {
+                    input.close();
+                } catch (IOException e) {
+                    // nothing to do, swallow it
                 }
             }
         }
@@ -134,6 +153,14 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
 
             log.info( "+-----------------------------------------------------+" );
         }
+    }
+
+    protected void setUp() throws Exception {
+        // do nothing by default
+    }
+
+    protected void tearDown() throws Exception {
+        // do nothing by default
     }
 
 }
