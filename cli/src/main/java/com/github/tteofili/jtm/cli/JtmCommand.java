@@ -15,87 +15,43 @@
  */
 package com.github.tteofili.jtm.cli;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.common.collect.Iterables;
 
-import com.github.tteofili.jtm.JiraAnalysisTool;
-import com.github.tteofili.jtm.feed.jira.io.stax.JiraFeedStaxReader;
-
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.joran.JoranConfigurator;
-import ch.qos.logback.core.joran.spi.JoranException;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
 @Command(
     name = "jtm",
     descriptionHeading = "Tool for analyzing Atlassian Jira issues exported to the XML feed format\n",
     description = "This tool does topic modelling based on word2vec and paragraph vectors",
-    versionProvider = JtmVersionProvider.class
+    versionProvider = JtmVersionProvider.class,
+    subcommands = { AnalyzeCommand.class, PipelineCommand.class },
+    separator = " ",
+    sortOptions = true
 )
-public class JtmCommand
-{
-
-    private static final Logger log = LoggerFactory.getLogger(JtmCommand.class);
-
-    @Parameters(index = "0", description = "Exported JIRA XML feed file.", arity = "1")
-    private File exportedJiraFeed;
-
-    @Option(names = { "-e", "--epochs" }, description = "Epochs.")
-    private int epochs = 5;
-
-    @Option(names = { "-l", "--layer-size" }, description = "Layers.")
-    private int layerSize = 200;
-
-    @Option(names = { "-t", "--top-n" }, description = "Top.")
-    private int topN = 5;
-
-    @Option(names = { "-v", "--hierarchical-vectors" }, description = "Hierarchical vectors.")
-    private boolean hierarchicalVectors = false;
-
-    @Option(names = { "-c", "--include-comments" }, description = "Include comments.")
-    private boolean includeComments = true;
-
-    @Option(names = { "-i", "--index" }, description = "Index.")
-    private boolean index = false;
+public class JtmCommand {
 
     @Option(names = { "-h", "--help" }, usageHelp = true, description = "Display the usage message.")
     private boolean helpRequested = false;
 
-    @Option(names = { "-V", "--version" }, versionHelp = true, description = "Display version info.")
-    private boolean versionInfoRequested = false;
+    public static void main(String[] args) {
+        JtmCommand jtmCommand = new JtmCommand();
+        CommandLine mainCommandLine = new CommandLine(jtmCommand);
 
-    @Option(names = { "-X", "--verbose" }, description = "Produce execution debug output.")
-    private boolean verbose = false;
-
-    @Option( names = { "-q", "--quiet" }, description = "Log errors only." )
-    private boolean quiet = false;
-
-    public static void main( String[] args )
-    {
-        /* exit statuses:
-         * -1: error
-         *  0: info
-         *  1: success
-         */
-        JtmCommand command = new JtmCommand();
-        CommandLine commandLine = new CommandLine(command);
-
+        List<CommandLine> parsed = null;
         try {
-            commandLine.parse(args);
+            parsed = mainCommandLine.parse(args);
         } catch (Throwable t) {
             System.err.println( t.getMessage() );
             System.exit( -1 );
         }
 
-        if (commandLine.isUsageHelpRequested()) {
+        CommandLine commandLine = Iterables.getLast(parsed);
+
+        if (parsed.size() == 1 || commandLine.isUsageHelpRequested()) {
            commandLine.usage(System.out);
            System.exit( 0 );
         } else if (commandLine.isVersionHelpRequested()) {
@@ -103,89 +59,8 @@ public class JtmCommand
            System.exit( 0 );
         }
 
-        Runtime.getRuntime().addShutdownHook( new ShutDownHook(log) );
-
-        // setup the logging stuff
-
-        if ( command.quiet )
-        {
-            System.setProperty( "logging.level", "ERROR" );
-        }
-        else if ( command.verbose )
-        {
-            System.setProperty( "logging.level", "DEBUG" );
-        }
-        else
-        {
-            System.setProperty( "logging.level", "INFO" );
-        }
-
-        // assume SLF4J is bound to logback in the current environment
-        final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-
-        try
-        {
-            JoranConfigurator configurator = new JoranConfigurator();
-            configurator.setContext( lc );
-            // the context was probably already configured by default configuration
-            // rules
-            lc.reset();
-            configurator.doConfigure( JiraAnalysisTool.class.getClassLoader().getResourceAsStream( "logback-config.xml" ) );
-        }
-        catch ( JoranException je )
-        {
-            // StatusPrinter should handle this
-        }
-
-        log.info( "                         ''~``" );
-        log.info( "                        ( o o )" );
-        log.info( "+------------------.oooO--(_)--Oooo.------------------+" );
-        log.info( "{} v{}", new Object[]{ System.getProperty( "app.name" ), System.getProperty( "project.version" ) } );
-        log.info( "+-----------------------------------------------------+" );
-        log.info( "" );
-
-        int status = 1;
-        Throwable error = null;
-        InputStream input = null;
-        try {
-            input = new FileInputStream(command.exportedJiraFeed);
-
-            new JiraAnalysisTool( command.epochs,
-                                  command.layerSize,
-                                  command.topN,
-                                  command.hierarchicalVectors,
-                                  command.includeComments,
-                                  command.index ).analyze(new JiraFeedStaxReader().read(input, false));
-        } catch (Throwable t) {
-            status = -1;
-            error = t;
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    // nothing to do, swallow it
-                }
-            }
-        }
-
-        log.info( "+-----------------------------------------------------+" );
-        log.info( "{} {}", System.getProperty( "app.name" ).toUpperCase(), ( status < 0 ) ? "FAILURE" : "SUCCESS" );
-        log.info( "+-----------------------------------------------------+" );
-
-        if ( status < 0 )
-        {
-            if ( command.verbose )
-            {
-                log.error( "Execution terminated with errors", error );
-            }
-            else
-            {
-                log.error( "Execution terminated with errors: {}", error.getMessage() );
-            }
-
-            log.info( "+-----------------------------------------------------+" );
-        }
+        Runnable runnable = commandLine.getCommand();
+        runnable.run();
     }
 
 }

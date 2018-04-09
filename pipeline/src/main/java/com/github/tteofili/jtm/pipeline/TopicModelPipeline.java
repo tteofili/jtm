@@ -15,8 +15,6 @@
  */
 package com.github.tteofili.jtm.pipeline;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,10 +46,10 @@ import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
+import com.github.tteofili.jtm.AnalysisTool;
 import com.github.tteofili.jtm.JiraAnalysisTool;
 import com.github.tteofili.jtm.feed.jira.Feed;
 import com.github.tteofili.jtm.feed.jira.Issue;
-import com.github.tteofili.jtm.feed.jira.io.stax.JiraFeedStaxReader;
 import com.google.common.base.Joiner;
 
 import opennlp.tools.chunker.Chunker;
@@ -64,14 +62,15 @@ import opennlp.tools.tokenize.TokenizerME;
 import opennlp.tools.tokenize.TokenizerModel;
 import opennlp.tools.util.Span;
 
-public class TopicModelPipeline {
+public class TopicModelPipeline implements AnalysisTool {
 
   private static final String TOKEN_TYPE = "opennlp.uima.Token";
   private static final String CHUNK_TYPE = "opennlp.uima.Chunk";
   private static final String POS_FEATURE_NAME = "pos";
   private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
 
-  public static void main(String[] args) throws Exception {
+  @Override
+  public void analyze(Feed feed) throws Exception {
 
     // opennlp models
 
@@ -92,15 +91,6 @@ public class TopicModelPipeline {
         StreamExecutionEnvironment.getExecutionEnvironment();
 
     env.getConfig().registerTypeWithKryoSerializer(CASImpl.class, KryoCasSerializer.class);
-
-    String exportPath = args[0];
-    if (exportPath == null || exportPath.trim().length() == 0) {
-      System.exit(-1);
-    }
-    File file = new File(exportPath);
-    FileInputStream stream = new FileInputStream(file);
-    Feed feed = new JiraFeedStaxReader().read(stream, false );
-    stream.close();
 
     DataStreamSource<Issue> jiraIssueDataStreamSource = env.fromCollection(feed.getIssues().getIssues());
 

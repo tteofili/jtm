@@ -15,7 +15,6 @@
  */
 package com.github.tteofili.jtm;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +38,7 @@ import com.github.tteofili.jtm.tm.TopicModel;
  * Tool for analyzing Jira issues exported as XML.
  *
  */
-public class JiraAnalysisTool {
+public class JiraAnalysisTool implements AnalysisTool {
 
   private static final Logger log = LoggerFactory.getLogger(JiraAnalysisTool.class);
 
@@ -69,7 +68,8 @@ public class JiraAnalysisTool {
     this.index = index;
   }
 
-  public void analyze(Feed feed) throws IOException {
+  @Override
+  public void analyze(Feed feed) throws Exception {
     log.info("Analysing feed {} ({})",
              feed.getIssues().getTitle(),
              feed.getIssues().getBuildInfo());

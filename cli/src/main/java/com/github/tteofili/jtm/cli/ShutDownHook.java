@@ -32,6 +32,7 @@ final class ShutDownHook extends Thread {
     }
 
     public void run() {
+        log.info( "+-----------------------------------------------------+" );
         // format the uptime string
 
         Formatter uptimeFormatter = new Formatter();
