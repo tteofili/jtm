@@ -48,8 +48,8 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 
 import com.github.tteofili.jtm.AnalysisTool;
 import com.github.tteofili.jtm.JiraAnalysisTool;
-import com.github.tteofili.jtm.feed.jira.Feed;
-import com.github.tteofili.jtm.feed.jira.Issue;
+import com.github.tteofili.jtm.feed.Feed;
+import com.github.tteofili.jtm.feed.Issue;
 import com.google.common.base.Joiner;
 
 import opennlp.tools.chunker.Chunker;

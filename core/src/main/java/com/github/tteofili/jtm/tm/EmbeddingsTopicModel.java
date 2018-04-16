@@ -40,7 +40,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.tteofili.jtm.feed.jira.Issue;
+import com.github.tteofili.jtm.feed.Issue;
 
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTagger;

@@ -66,6 +66,7 @@
     </developers>
 
     <modules>
+        <module>issue-model</module>
         <module>jira-reader</module>
         <module>core</module>
         <module>cli</module>

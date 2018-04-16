@@ -18,7 +18,7 @@ package com.github.tteofili.jtm.tm;
 import java.io.IOException;
 import java.util.Collection;
 
-import com.github.tteofili.jtm.feed.jira.Issue;
+import com.github.tteofili.jtm.feed.Issue;
 
 /**
  * Topic modeling API for training and inference

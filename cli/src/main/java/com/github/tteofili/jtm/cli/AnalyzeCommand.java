@@ -16,7 +16,7 @@
 package com.github.tteofili.jtm.cli;
 
 import com.github.tteofili.jtm.JiraAnalysisTool;
-import com.github.tteofili.jtm.feed.jira.Feed;
+import com.github.tteofili.jtm.feed.Feed;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;

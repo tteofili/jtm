@@ -46,7 +46,7 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>jira-reader</artifactId>
+            <artifactId>issue-model</artifactId>
             <version>${project.version}</version>
         </dependency>
 

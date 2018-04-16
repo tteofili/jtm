@@ -15,6 +15,8 @@
  */
 package com.github.tteofili.jtm.tm;
 
+import static org.junit.Assert.assertNotNull;
+
 import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
@@ -23,8 +25,6 @@ import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
 import org.apache.lucene.analysis.custom.CustomAnalyzer;
 import org.apache.lucene.analysis.standard.ClassicTokenizerFactory;
 import org.junit.Test;
-
-import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests for {@link LuceneTokenizerFactory}

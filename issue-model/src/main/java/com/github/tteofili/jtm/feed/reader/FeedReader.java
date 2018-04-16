@@ -13,19 +13,19 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.github.tteofili.jtm.cli;
+package com.github.tteofili.jtm.feed.reader;
+
+import java.io.InputStream;
 
 import com.github.tteofili.jtm.feed.Feed;
-import com.github.tteofili.jtm.pipeline.TopicModelPipeline;
 
-import picocli.CommandLine.Command;
+/**
+ * JTM APIs reader definition.
+ */
+public interface FeedReader {
 
-@Command(name = "pipe")
-public class PipelineCommand extends AbstractCommand {
+    Feed read(InputStream stream) throws Exception;
 
-    @Override
-    public void analyze(Feed feed) throws Exception {
-        new TopicModelPipeline().analyze(feed);
-    }
+    String getSourceType();
 
 }

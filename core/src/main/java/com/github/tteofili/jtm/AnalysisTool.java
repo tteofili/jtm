@@ -15,7 +15,7 @@
  */
 package com.github.tteofili.jtm;
 
-import com.github.tteofili.jtm.feed.jira.Feed;
+import com.github.tteofili.jtm.feed.Feed;
 
 public interface AnalysisTool {
 

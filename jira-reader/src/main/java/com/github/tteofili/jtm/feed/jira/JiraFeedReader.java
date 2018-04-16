@@ -13,19 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.github.tteofili.jtm.cli;
+package com.github.tteofili.jtm.feed.jira;
+
+import java.io.InputStream;
 
 import com.github.tteofili.jtm.feed.Feed;
-import com.github.tteofili.jtm.pipeline.TopicModelPipeline;
+import com.github.tteofili.jtm.feed.io.stax.JiraFeedStaxReader;
+import com.github.tteofili.jtm.feed.reader.FeedReader;
 
-import picocli.CommandLine.Command;
+public final class JiraFeedReader implements FeedReader {
 
-@Command(name = "pipe")
-public class PipelineCommand extends AbstractCommand {
+    private final JiraFeedStaxReader jiraFeedStaxReader = new JiraFeedStaxReader();
 
     @Override
-    public void analyze(Feed feed) throws Exception {
-        new TopicModelPipeline().analyze(feed);
+    public Feed read(InputStream stream) throws Exception {
+        return jiraFeedStaxReader.read(stream, false);
+    }
+
+    @Override
+    public String getSourceType() {
+        return "jira";
     }
 
 }

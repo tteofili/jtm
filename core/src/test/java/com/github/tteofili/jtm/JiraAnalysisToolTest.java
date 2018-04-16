@@ -23,8 +23,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import com.github.tteofili.jtm.feed.jira.Feed;
-import com.github.tteofili.jtm.feed.jira.io.stax.JiraFeedStaxReader;
+import com.github.tteofili.jtm.feed.Feed;
+import com.github.tteofili.jtm.feed.jira.JiraFeedReader;
 
 /**
  * Tests for {@link JiraAnalysisTool}
@@ -58,7 +58,7 @@ public class JiraAnalysisToolTest {
   public void testExecution() throws Exception {
     JiraAnalysisTool jiraAnalysisTool = new JiraAnalysisTool(epochs, layerSize, topN, false, true, false);
     InputStream inputStream = getClass().getResourceAsStream(resource);
-    Feed feed = new JiraFeedStaxReader().read(inputStream, false);
+    Feed feed = new JiraFeedReader().read(inputStream);
     jiraAnalysisTool.analyze(feed);
     inputStream.close();
   }

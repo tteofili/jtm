@@ -28,8 +28,8 @@ import org.deeplearning4j.models.word2vec.VocabWord;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 
-import com.github.tteofili.jtm.feed.jira.Comment;
-import com.github.tteofili.jtm.feed.jira.Issue;
+import com.github.tteofili.jtm.feed.Comment;
+import com.github.tteofili.jtm.feed.Issue;
 
 /**
  * Utility class for Par2Hier vector algorithms

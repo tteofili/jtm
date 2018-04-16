@@ -30,8 +30,8 @@ import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.tteofili.jtm.feed.jira.Feed;
-import com.github.tteofili.jtm.feed.jira.Issue;
+import com.github.tteofili.jtm.feed.Feed;
+import com.github.tteofili.jtm.feed.Issue;
 import com.github.tteofili.jtm.tm.EmbeddingsTopicModel;
 import com.github.tteofili.jtm.tm.TopicModel;
 /**

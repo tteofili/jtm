@@ -13,19 +13,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.github.tteofili.jtm.cli;
 
-import com.github.tteofili.jtm.feed.Feed;
-import com.github.tteofili.jtm.pipeline.TopicModelPipeline;
-
-import picocli.CommandLine.Command;
-
-@Command(name = "pipe")
-public class PipelineCommand extends AbstractCommand {
-
-    @Override
-    public void analyze(Feed feed) throws Exception {
-        new TopicModelPipeline().analyze(feed);
-    }
-
-}
+/**
+ * Core JTM APIs utilities.
+ */
+package com.github.tteofili.jtm.feed.utils;

@@ -19,14 +19,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.ServiceLoader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.tteofili.jtm.AnalysisTool;
 import com.github.tteofili.jtm.JiraAnalysisTool;
-import com.github.tteofili.jtm.feed.jira.Feed;
-import com.github.tteofili.jtm.feed.jira.io.stax.JiraFeedStaxReader;
+import com.github.tteofili.jtm.feed.Feed;
+import com.github.tteofili.jtm.feed.reader.FeedReader;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
@@ -49,6 +52,9 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
 
     @Option( names = { "-q", "--quiet" }, description = "Log errors only." )
     private boolean quiet = false;
+
+    @Option( names = { "-r", "--reader" }, description = "The reader type name.", required = true )
+    private String readerType;
 
     @Parameters(index = "0", description = "Exported JIRA XML feed file(s).", arity = "*")
     private File[] exportedJiraFeeds;
@@ -105,7 +111,10 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
         log.info( "+-----------------------------------------------------+" );
         log.info( "" );
 
-        final JiraFeedStaxReader feedReader = new JiraFeedStaxReader();
+        // load all the available readers in the classpath
+        Map<String, FeedReader> readers = new HashMap<>();
+        ServiceLoader<FeedReader> readersLoader = ServiceLoader.load(FeedReader.class);
+        readersLoader.forEach(feedReader -> readers.put(feedReader.getSourceType(), feedReader));
 
         int status = 1;
         Throwable error = null;
@@ -113,11 +122,19 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
         Feed feed = null;
 
         try {
+            FeedReader feedReader = readers.get(readerType);
+            if (feedReader == null) {
+                throw new Exception("Feed reader '"
+                                    + readerType
+                                    + "' does not exists, availables are: "
+                                    + readers.keySet());
+            }
+
             setUp();
 
             for (File exportedJiraFeed : exportedJiraFeeds) {
                 input = new FileInputStream(exportedJiraFeed);
-                feed = feedReader.read(input, false);
+                feed = feedReader.read(input);
 
                 analyze(feed);
             }

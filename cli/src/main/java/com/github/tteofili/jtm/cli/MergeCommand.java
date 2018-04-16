@@ -20,10 +20,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Date;
 
-import com.github.tteofili.jtm.feed.jira.BuildInfo;
-import com.github.tteofili.jtm.feed.jira.Feed;
-import com.github.tteofili.jtm.feed.jira.IssuesCollection;
-import com.github.tteofili.jtm.feed.jira.io.stax.JiraFeedStaxWriter;
+import com.github.tteofili.jtm.feed.BuildInfo;
+import com.github.tteofili.jtm.feed.Feed;
+import com.github.tteofili.jtm.feed.IssuesCollection;
+import com.github.tteofili.jtm.feed.io.stax.JiraFeedStaxWriter;
+import com.github.tteofili.jtm.feed.utils.FeedUtils;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -57,7 +58,7 @@ public class MergeCommand extends AbstractCommand {
     @Override
     public void analyze(Feed feed) throws Exception {
         log.info("Merging {} to the target feed...", feed.getIssues().getTitle());
-        target.getIssues().getIssues().addAll(feed.getIssues().getIssues());
+        FeedUtils.merge(feed, target);
         log.info("{} issues successfully merged to the target feed", feed.getIssues().getIssues().size());
     }
 
