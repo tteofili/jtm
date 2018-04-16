@@ -29,7 +29,7 @@
     <artifactId>issue-model</artifactId>
     <packaging>jar</packaging>
 
-    <name>JTM :: JIRA Reader</name>
+    <name>JTM :: Issue Model</name>
 
     <dependencies>
         <dependency>
