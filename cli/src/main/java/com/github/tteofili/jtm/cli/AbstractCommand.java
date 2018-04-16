@@ -15,6 +15,7 @@
  */
 package com.github.tteofili.jtm.cli;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -113,8 +114,8 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
 
         // load all the available readers in the classpath
         Map<String, FeedReader> readers = new HashMap<>();
-        ServiceLoader<FeedReader> readersLoader = ServiceLoader.load(FeedReader.class);
-        readersLoader.forEach(feedReader -> readers.put(feedReader.getSourceType(), feedReader));
+        ServiceLoader.load(FeedReader.class)
+                     .forEach(feedReader -> readers.put(feedReader.getSourceType(), feedReader));
 
         int status = 1;
         Throwable error = null;
@@ -135,6 +136,7 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
             for (File exportedJiraFeed : exportedJiraFeeds) {
                 input = new FileInputStream(exportedJiraFeed);
                 feed = feedReader.read(input);
+                closeQuietly(input);
 
                 analyze(feed);
             }
@@ -144,13 +146,7 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
             status = -1;
             error = t;
         } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    // nothing to do, swallow it
-                }
-            }
+            closeQuietly(input);
         }
 
         log.info( "+-----------------------------------------------------+" );
@@ -178,6 +174,16 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
 
     protected void tearDown() throws Exception {
         // do nothing by default
+    }
+
+    private static void closeQuietly(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            } catch (IOException e) {
+                // do nothing
+            }
+        }
     }
 
 }
