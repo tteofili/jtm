@@ -56,6 +56,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>jtm-topics-writer</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!--
          | CLI
         -->

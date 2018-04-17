@@ -48,6 +48,7 @@ import org.nd4j.linalg.api.ndarray.INDArray;
 
 import com.github.tteofili.jtm.AnalysisTool;
 import com.github.tteofili.jtm.JiraAnalysisTool;
+import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.Issue;
 import com.google.common.base.Joiner;
@@ -70,7 +71,7 @@ public class TopicModelPipeline implements AnalysisTool {
   private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
 
   @Override
-  public void analyze(Feed feed) throws Exception {
+  public Topics analyze(Feed feed) throws Exception {
 
     // opennlp models
 
@@ -198,17 +199,17 @@ public class TopicModelPipeline implements AnalysisTool {
           return cas;
         })
         .countWindowAll(100).apply(f)
-        .map(new MapFunction<Embeddings, TreeSet<TopicCount>>() {
+        .map(new MapFunction<Embeddings, Topics>() {
 
           @Override
-          public TreeSet<TopicCount> map(Embeddings value) throws Exception {
+          public Topics map(Embeddings value) throws Exception {
 
             POSTaggerME tagger = new POSTaggerME(posModel);
             int topN = 3;
             ParagraphVectors paragraphVectors = value.paragraphVectors;
             Word2Vec word2vec = value.word2Vec;
 
-            TopicCounts topicCounts = new TopicCounts();
+            Topics topics = new Topics();
             for (CAS cas : value.values) {
               String key = cas.toString();
               INDArray issueVector;
@@ -229,10 +230,10 @@ public class TopicModelPipeline implements AnalysisTool {
               nearestWords.addAll(nearestLabelsWords);
 
               INDArray wordVectorsMean = word2vec.getWordVectorsMean(nearestWords);
-              Collection<String> topics = word2vec.wordsNearest(wordVectorsMean, topN);
+              Collection<String> extractedTopics = word2vec.wordsNearest(wordVectorsMean, topN);
 
               Collection<String> toRemove = new LinkedList<>();
-              for (String t : topics) {
+              for (String t : extractedTopics) {
                 String[] tags = tagger.tag(new String[] {t});
                 String tag = tags[0];
                 boolean stopTag = Arrays.binarySearch(stopTags, tag) >= 0;
@@ -240,15 +241,18 @@ public class TopicModelPipeline implements AnalysisTool {
                   toRemove.add(t);
                 }
               }
-              topics.removeAll(toRemove);
-              topicCounts.add(topics);
+              extractedTopics.removeAll(toRemove);
+
+              // TODO how to link issue to topics, here?
+              //topics.add(extractedTopics);
             }
 
-            return topicCounts.asSortedTopicSet();
+            return topics;
           }
         }).print();
 
     env.execute();
+    return null;
   }
 
   private static class Embeddings {
@@ -260,51 +264,6 @@ public class TopicModelPipeline implements AnalysisTool {
       this.word2Vec = word2Vec;
       this.paragraphVectors = paragraphVectors;
       this.values = values;
-    }
-  }
-
-  private static class TopicCounts {
-
-    private final Map<String, TopicCount> counts = new HashMap<>();
-
-    public void add(Collection<String> topics) {
-      for (String t : topics) {
-        if (counts.containsKey(t)) {
-          counts.get(t).increment();
-        } else {
-          counts.put(t, new TopicCount(t));
-        }
-      }
-    }
-
-    private TreeSet<TopicCount> asSortedTopicSet() {
-      return new TreeSet<>(counts.values());
-    }
-
-  }
-
-  private static class TopicCount implements Comparable<TopicCount> {
-    private final String topic;
-    private Integer count;
-
-
-    private TopicCount(String topic) {
-      this.topic = topic;
-      this.count = 1;
-    }
-
-    public void increment() {
-      this.count++;
-    }
-
-    @Override
-    public int compareTo(TopicCount o) {
-      return this.count - o.count;
-    }
-
-    @Override
-    public String toString() {
-      return topic + " : " + count;
     }
   }
 

@@ -68,10 +68,10 @@
     <modules>
         <module>issue-model</module>
         <module>jira-reader</module>
-        <module>index-writer</module>
         <module>core</module>
-        <module>cli</module>
+        <module>topics-writer</module>
         <module>pipeline</module>
+        <module>cli</module>
     </modules>
 
     <scm>

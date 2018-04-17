@@ -18,6 +18,7 @@ package com.github.tteofili.jtm.cli;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -29,6 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import com.github.tteofili.jtm.AnalysisTool;
 import com.github.tteofili.jtm.JiraAnalysisTool;
+import com.github.tteofili.jtm.aggregation.Topics;
+import com.github.tteofili.jtm.aggregation.TopicsWriter;
 import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.reader.FeedReader;
 
@@ -57,8 +60,13 @@ abstract class AbstractCommand implements Runnable {
     @Option( names = { "-r", "--reader" }, description = "The reader type name.", required = true )
     private String readerType;
 
+    @Option( names = { "-o", "--output" }, description = "The directory where writing the extracted topics.")
+    protected File outputDir = new File(System.getProperty("user.dir"));
+
     @Parameters(index = "0", description = "Exported JIRA XML feed file(s).", arity = "*")
     private File[] exportedJiraFeeds;
+
+    private final TopicsWriter topicsWriter = new TopicsWriter();
 
     @Override
     public void run() {
@@ -112,6 +120,11 @@ abstract class AbstractCommand implements Runnable {
         log.info( "+-----------------------------------------------------+" );
         log.info( "" );
 
+        // setup the output directory
+        if (!outputDir.exists()) {
+            outputDir.mkdirs();
+        }
+
         // load all the available readers in the classpath
         Map<String, FeedReader> readers = new HashMap<>();
         ServiceLoader.load(FeedReader.class)
@@ -121,6 +134,8 @@ abstract class AbstractCommand implements Runnable {
         Throwable error = null;
         InputStream input = null;
         Feed feed = null;
+
+        Topics aggregatedTopics = new Topics();
 
         try {
             FeedReader feedReader = readers.get(readerType);
@@ -140,10 +155,23 @@ abstract class AbstractCommand implements Runnable {
                 feed = feedReader.read(input);
                 closeQuietly(input);
 
-                analysisTool.analyze(feed);
+                Topics topics = analysisTool.analyze(feed);
+                if (topics != null) {
+                    // write each file per topic
+                    String fileName = exportedJiraFeed.getName();
+                    writeTopics(topics, fileName.substring(0, fileName.lastIndexOf( '.')));
+
+                    // aggregate results
+                    aggregatedTopics.merge(topics);
+                }
             }
 
             tearDown();
+
+            // write the aggregated results
+            if (exportedJiraFeeds.length > 1 && !aggregatedTopics.isEmpty()) {
+                writeTopics(aggregatedTopics, "aggregated-topics_" + System.currentTimeMillis());
+            }
         } catch (Throwable t) {
             status = -1;
             error = t;
@@ -178,6 +206,13 @@ abstract class AbstractCommand implements Runnable {
 
     protected void tearDown() throws Exception {
         // do nothing by default
+    }
+
+    private void writeTopics(Topics topics, String fileName) throws Exception {
+        File topicsJsonFile = new File(outputDir, fileName + ".json");
+        FileOutputStream outputStream = new FileOutputStream(topicsJsonFile);
+        topicsWriter.write( topics, outputStream);
+        closeQuietly(outputStream);
     }
 
     private static void closeQuietly(Closeable closeable) {

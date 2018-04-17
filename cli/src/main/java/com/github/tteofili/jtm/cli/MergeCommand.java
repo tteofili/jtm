@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.util.Date;
 
 import com.github.tteofili.jtm.AnalysisTool;
+import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.feed.BuildInfo;
 import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.IssuesCollection;
@@ -28,13 +29,9 @@ import com.github.tteofili.jtm.feed.io.stax.JiraFeedStaxWriter;
 import com.github.tteofili.jtm.feed.utils.FeedUtils;
 
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Option;
 
 @Command(name = "merge", description = "Merges all the input feeds in a single one")
 public class MergeCommand extends AbstractCommand implements AnalysisTool {
-
-    @Option(names = { "-o", "--output" }, description = "The output file where writing the resulting feed.")
-    private File output;
 
     private Feed target;
 
@@ -62,27 +59,25 @@ public class MergeCommand extends AbstractCommand implements AnalysisTool {
     }
 
     @Override
-    public void analyze(Feed feed) throws Exception {
+    public Topics analyze(Feed feed) throws Exception {
         log.info("Merging {} to the target feed...", feed.getIssues().getTitle());
         FeedUtils.merge(feed, target);
         log.info("{} issues successfully merged to the target feed", feed.getIssues().getIssues().size());
+        return null;
     }
 
     @Override
     protected void tearDown() throws Exception {
-        File parentDir = output.getParentFile();
-        if (!parentDir.exists()) {
-            parentDir.mkdirs();
-        }
+        File outputFile = new File(outputDir, "aggregated-issues" + System.currentTimeMillis() + ".xml");
 
-        log.info("Writing merge result to '{}' output file...", this.output);
+        log.info("Writing merge result to '{}' output file...", outputFile);
 
         FileOutputStream stream = null;
         try {
-            stream = new FileOutputStream(this.output);
+            stream = new FileOutputStream(outputFile);
             new JiraFeedStaxWriter().write(stream, target);
         } finally {
-            log.info("Merge written to '{}'", this.output);
+            log.info("Merge written to '{}'", outputFile);
 
             if (stream != null) {
                 try {

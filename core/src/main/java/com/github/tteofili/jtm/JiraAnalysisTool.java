@@ -15,8 +15,6 @@
  */
 package com.github.tteofili.jtm;
 
-import java.io.IOException;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,16 +29,10 @@ import org.apache.lucene.analysis.opennlp.OpenNLPPOSFilterFactory;
 import org.apache.lucene.analysis.opennlp.OpenNLPTokenizerFactory;
 import org.apache.lucene.analysis.pattern.PatternReplaceFilterFactory;
 import org.apache.lucene.analysis.standard.ClassicTokenizerFactory;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.transport.TransportAddress;
-import org.elasticsearch.common.xcontent.XContentBuilder;
-import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.Issue;
 import com.github.tteofili.jtm.tm.EmbeddingsTopicModel;
@@ -83,7 +75,7 @@ public class JiraAnalysisTool implements AnalysisTool {
   }
 
   @Override
-  public void analyze(Feed feed) throws Exception {
+  public Topics analyze(Feed feed) throws Exception {
     log.info("Analysing feed {} ({})",
              feed.getIssues().getTitle(),
              feed.getIssues().getBuildInfo());
@@ -124,68 +116,18 @@ public class JiraAnalysisTool implements AnalysisTool {
     TopicModel topicModel = new EmbeddingsTopicModel(epochs, layerSize, hierarchicalVectors, includeComments, analyzer);
     topicModel.fit(issues);
 
+    Topics topics = new Topics();
+
     for (Issue issue : feed.getIssues().getIssues()) {
-      List<String> topics = new ArrayList<>(topicModel.extractTopics(topN, issue.getKey().getValue()));
-      issue.setTopics(topics);
-      log.info("{} : {}", issue.getTitle(), topics);
+      List<String> extractedTopics = new ArrayList<>(topicModel.extractTopics(topN, issue.getKey().getValue()));
+      issue.setTopics(extractedTopics);
+
+      log.info("Topics {} extracted from issue '{}'", extractedTopics, issue.getTitle());
+
+      topics.add(issue);
     }
 
-    if (index) {
-      Settings settings = Settings.builder()
-          .put("cluster.name", "elasticsearch")
-          .put("xpack.security.user", "elastic:Q96HdxDpHMH2p9TrMvqA")
-          .build();
-      TransportClient client = new PreBuiltXPackTransportClient(settings);
-      client.addTransportAddresses(new TransportAddress(InetAddress.getByName("localhost"), 9300));
-
-      String indexName = feed.getIssues().getTitle().toLowerCase();
-
-//      try {
-//        BulkByScrollResponse bulk =
-//            DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
-//                .filter(QueryBuilders.matchAllQuery())
-//                .source(indexName)
-//                .get();
-//
-//        long deleted = bulk.getDeleted();
-//        log.info("{} deletion : {}", indexName, deleted);
-//      } catch (Throwable t) {
-//        // do nothing
-//      }
-
-      String type = "doc";
-      try {
-        for (Issue issue : issues) {
-
-          XContentBuilder jsonBuilder = XContentFactory.jsonBuilder()
-              .startObject()
-              .field("id", issue.getKey().getValue())
-              .field("assignee", issue.getAssignee())
-              .field("components", issue.getComponents())
-              .field("created", issue.getCreated())
-              .field("description", issue.getDescription())
-              .field("labels", issue.getLabels())
-              .field("link", issue.getLink())
-              .field("projectId", issue.getProject().getName())
-              .field("reporter", issue.getReporter())
-              .field("resolution", issue.getResolution())
-              .field("summary", issue.getSummary())
-              .field("title", issue.getTitle())
-              .field("topics", issue.getTopics())
-              .field("typeId", issue.getType())
-              .field("updated", issue.getUpdated())
-              .endObject();
-
-          IndexResponse response = client.prepareIndex(indexName, type, issue.getKey().getValue())
-              .setSource(jsonBuilder)
-              .get();
-
-          log.info("indexing {} : {}", issue.getKey().getValue(), response.status());
-        }
-      } finally {
-        client.close();
-      }
-    }
+    return topics;
   }
 
 }

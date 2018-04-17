@@ -15,10 +15,11 @@
  */
 package com.github.tteofili.jtm;
 
+import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.feed.Feed;
 
 public interface AnalysisTool {
 
-    void analyze(Feed feed) throws Exception;
+    Topics analyze(Feed feed) throws Exception;
 
 }
