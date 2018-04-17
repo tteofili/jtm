@@ -71,6 +71,7 @@
         <module>core</module>
         <module>topics-writer</module>
         <module>pipeline</module>
+        <module>es-indexer</module>
         <module>cli</module>
     </modules>
 

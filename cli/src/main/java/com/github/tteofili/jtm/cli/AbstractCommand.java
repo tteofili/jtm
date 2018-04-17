@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import com.github.tteofili.jtm.AnalysisTool;
 import com.github.tteofili.jtm.JiraAnalysisTool;
 import com.github.tteofili.jtm.aggregation.Topics;
+import com.github.tteofili.jtm.aggregation.TopicsIndexer;
 import com.github.tteofili.jtm.aggregation.TopicsWriter;
 import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.reader.FeedReader;
@@ -59,6 +60,9 @@ abstract class AbstractCommand implements Runnable {
 
     @Option( names = { "-r", "--reader" }, description = "The reader type name.", required = true )
     private String readerType;
+
+    @Option(names = { "-i", "--index" }, description = "The index system to be used.")
+    private String index = null;
 
     @Option( names = { "-o", "--output" }, description = "The directory where writing the extracted topics.")
     protected File outputDir = new File(System.getProperty("user.dir"));
@@ -129,6 +133,16 @@ abstract class AbstractCommand implements Runnable {
         Map<String, FeedReader> readers = new HashMap<>();
         ServiceLoader.load(FeedReader.class)
                      .forEach(feedReader -> readers.put(feedReader.getSourceType(), feedReader));
+        FeedReader feedReader = readers.get(readerType);
+
+        // load all the available indexers in the classpath
+        Map<String, TopicsIndexer> indexers = new HashMap<>();
+        ServiceLoader.load(TopicsIndexer.class)
+                     .forEach(topicsIndexer -> indexers.put(topicsIndexer.getIndexerName(), topicsIndexer));
+        TopicsIndexer topicsIndexer = null;
+        if (index != null) {
+            topicsIndexer = indexers.get(index);
+        }
 
         int status = 1;
         Throwable error = null;
@@ -138,12 +152,18 @@ abstract class AbstractCommand implements Runnable {
         Topics aggregatedTopics = new Topics();
 
         try {
-            FeedReader feedReader = readers.get(readerType);
             if (feedReader == null) {
                 throw new Exception("Feed reader '"
                                     + readerType
                                     + "' does not exists, availables are: "
                                     + readers.keySet());
+            }
+
+            if (index != null && topicsIndexer == null) {
+                throw new Exception("Topics Indexer '"
+                                    + index
+                                    + "' does not exists, availables are: "
+                                    + indexers.keySet());
             }
 
             setUp();
@@ -160,6 +180,10 @@ abstract class AbstractCommand implements Runnable {
                     // write each file per topic
                     String fileName = exportedJiraFeed.getName();
                     writeTopics(topics, fileName.substring(0, fileName.lastIndexOf( '.')));
+
+                    if (topicsIndexer != null) {
+                        topicsIndexer.index(feed, topics);
+                    }
 
                     // aggregate results
                     aggregatedTopics.merge(topics);

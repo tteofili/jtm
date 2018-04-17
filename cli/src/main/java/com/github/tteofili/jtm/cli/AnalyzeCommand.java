@@ -39,9 +39,6 @@ public class AnalyzeCommand extends AbstractCommand {
     @Option(names = { "-c", "--include-comments" }, description = "Include comments.")
     private boolean includeComments = true;
 
-    @Option(names = { "-i", "--index" }, description = "Index.")
-    private boolean index = false;
-
     @Option(names = {"-a", "--analyzer"}, description = "Analyzer.")
     private String analyzerType = "simple";
 
@@ -52,7 +49,7 @@ public class AnalyzeCommand extends AbstractCommand {
                                     topN,
                                     hierarchicalVectors,
                                     includeComments,
-                                    index, analyzerType);
+                                    analyzerType);
     }
 
 }

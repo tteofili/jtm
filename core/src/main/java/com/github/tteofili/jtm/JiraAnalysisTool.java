@@ -55,8 +55,6 @@ public class JiraAnalysisTool implements AnalysisTool {
 
   private final boolean includeComments;
 
-  private final boolean index;
-
   private final String analyzerType;
 
   public JiraAnalysisTool(int epochs,
@@ -64,13 +62,12 @@ public class JiraAnalysisTool implements AnalysisTool {
                           int topN,
                           boolean hierarchicalVectors,
                           boolean includeComments,
-                          boolean index, String analyzerType) {
+                          String analyzerType) {
     this.epochs = epochs;
     this.layerSize = layerSize;
     this.topN = topN;
     this.hierarchicalVectors = hierarchicalVectors;
     this.includeComments = includeComments;
-    this.index = index;
     this.analyzerType = analyzerType;
   }
 
