@@ -42,6 +42,9 @@ public class AnalyzeCommand extends AbstractCommand {
     @Option(names = { "-i", "--index" }, description = "Index.")
     private boolean index = false;
 
+    @Option(names = {"-a", "--analyzer"}, description = "Analyzer.")
+    private String analyzerType = "simple";
+
     @Override
     public void analyze(Feed feed) throws Exception {
         new JiraAnalysisTool(epochs,
@@ -49,7 +52,7 @@ public class AnalyzeCommand extends AbstractCommand {
                              topN,
                              hierarchicalVectors,
                              includeComments,
-                             index).analyze(feed);
+                             index, analyzerType).analyze(feed);
     }
 
 }

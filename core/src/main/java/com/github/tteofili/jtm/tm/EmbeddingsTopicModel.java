@@ -24,15 +24,6 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.analysis.charfilter.HTMLStripCharFilterFactory;
-import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
-import org.apache.lucene.analysis.core.TypeTokenFilterFactory;
-import org.apache.lucene.analysis.custom.CustomAnalyzer;
-import org.apache.lucene.analysis.opennlp.OpenNLPChunkerFilterFactory;
-import org.apache.lucene.analysis.opennlp.OpenNLPPOSFilterFactory;
-import org.apache.lucene.analysis.opennlp.OpenNLPTokenizerFactory;
-import org.apache.lucene.analysis.pattern.PatternReplaceFilterFactory;
-import org.apache.lucene.analysis.standard.ClassicTokenizerFactory;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.models.word2vec.Word2Vec;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
@@ -59,18 +50,20 @@ public class EmbeddingsTopicModel implements TopicModel {
   private final int layerSize;
   private final boolean hierarchicalVectors;
   private final boolean includeComments;
+  private final Analyzer analyzer;
   private final POSTagger tagger;
 
   private ParagraphVectors paragraphVectors;
   private Word2Vec word2vec;
 
-  public EmbeddingsTopicModel(int epochs, int layerSize, boolean hierarchicalVectors, boolean includeComments) {
+  public EmbeddingsTopicModel(int epochs, int layerSize, boolean hierarchicalVectors, boolean includeComments, Analyzer analyzer) {
     this.epochs = epochs;
     this.layerSize = layerSize;
     this.hierarchicalVectors = hierarchicalVectors;
     this.includeComments = includeComments;
+    this.analyzer = analyzer;
     InputStream posStream = getClass().getResourceAsStream("/en-pos-maxent.bin");
-    POSModel posModel = null;
+    POSModel posModel;
     try {
       posModel = new POSModel(posStream);
     } catch (IOException e) {
@@ -87,33 +80,7 @@ public class EmbeddingsTopicModel implements TopicModel {
 
     JiraIterator iterator = new JiraIterator(issues, includeComments);
 
-    String sentenceModel = "en-sent.bin";
-    String tokenizerModel = "en-token.bin";
-    String posModel = "en-pos-maxent.bin";
-    String chunkerModel = "en-chunker.bin";
-    Analyzer openNLPAnalyzer = CustomAnalyzer.builder()
-        .addCharFilter(HTMLStripCharFilterFactory.class)
-        .withTokenizer(OpenNLPTokenizerFactory.class, OpenNLPTokenizerFactory.SENTENCE_MODEL,
-            sentenceModel, OpenNLPTokenizerFactory.TOKENIZER_MODEL, tokenizerModel)
-        .addTokenFilter(LowerCaseFilterFactory.class)
-        .addTokenFilter(OpenNLPPOSFilterFactory.class, OpenNLPPOSFilterFactory.POS_TAGGER_MODEL, posModel)
-        .addTokenFilter(OpenNLPChunkerFilterFactory.class, OpenNLPChunkerFilterFactory.CHUNKER_MODEL, chunkerModel)
-        .addTokenFilter(TypeTokenFilterFactory.class, "types", "types.txt", "useWhitelist", "true")
-        .build();
-
-    String revisionsPattern = "r\\d+";
-    try {
-      CustomAnalyzer.builder()
-                    .addCharFilter(HTMLStripCharFilterFactory.class)
-                    .withTokenizer(ClassicTokenizerFactory.class)
-                    .addTokenFilter(LowerCaseFilterFactory.class)
-                    .addTokenFilter(PatternReplaceFilterFactory.class, "pattern", revisionsPattern, "replacement", "", "replace", "all")
-                    .build();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    TokenizerFactory tf = new LuceneTokenizerFactory(openNLPAnalyzer);
+    TokenizerFactory tf = new LuceneTokenizerFactory(analyzer);
 
     word2vec = new Word2Vec.Builder()
         .iterate(iterator)

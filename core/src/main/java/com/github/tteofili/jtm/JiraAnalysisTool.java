@@ -15,11 +15,22 @@
  */
 package com.github.tteofili.jtm;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.charfilter.HTMLStripCharFilterFactory;
+import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
+import org.apache.lucene.analysis.core.TypeTokenFilterFactory;
+import org.apache.lucene.analysis.custom.CustomAnalyzer;
+import org.apache.lucene.analysis.opennlp.OpenNLPChunkerFilterFactory;
+import org.apache.lucene.analysis.opennlp.OpenNLPPOSFilterFactory;
+import org.apache.lucene.analysis.opennlp.OpenNLPTokenizerFactory;
+import org.apache.lucene.analysis.pattern.PatternReplaceFilterFactory;
+import org.apache.lucene.analysis.standard.ClassicTokenizerFactory;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
@@ -54,18 +65,21 @@ public class JiraAnalysisTool implements AnalysisTool {
 
   private final boolean index;
 
+  private final String analyzerType;
+
   public JiraAnalysisTool(int epochs,
                           int layerSize,
                           int topN,
                           boolean hierarchicalVectors,
                           boolean includeComments,
-                          boolean index) {
+                          boolean index, String analyzerType) {
     this.epochs = epochs;
     this.layerSize = layerSize;
     this.topN = topN;
     this.hierarchicalVectors = hierarchicalVectors;
     this.includeComments = includeComments;
     this.index = index;
+    this.analyzerType = analyzerType;
   }
 
   @Override
@@ -78,7 +92,36 @@ public class JiraAnalysisTool implements AnalysisTool {
 
     log.info("{} issues parsed", issues.size());
 
-    TopicModel topicModel = new EmbeddingsTopicModel(epochs, layerSize, hierarchicalVectors, includeComments);
+    Analyzer analyzer ;
+
+    if ("opennlp".equalsIgnoreCase(analyzerType)) {
+      String sentenceModel = "en-sent.bin";
+      String tokenizerModel = "en-token.bin";
+      String posModel = "en-pos-maxent.bin";
+      String chunkerModel = "en-chunker.bin";
+      analyzer = CustomAnalyzer.builder()
+          .addCharFilter(HTMLStripCharFilterFactory.class)
+          .withTokenizer(OpenNLPTokenizerFactory.class, OpenNLPTokenizerFactory.SENTENCE_MODEL,
+              sentenceModel, OpenNLPTokenizerFactory.TOKENIZER_MODEL, tokenizerModel)
+          .addTokenFilter(LowerCaseFilterFactory.class)
+          .addTokenFilter(OpenNLPPOSFilterFactory.class, OpenNLPPOSFilterFactory.POS_TAGGER_MODEL, posModel)
+          .addTokenFilter(OpenNLPChunkerFilterFactory.class, OpenNLPChunkerFilterFactory.CHUNKER_MODEL, chunkerModel)
+          .addTokenFilter(TypeTokenFilterFactory.class, "types", "types.txt", "useWhitelist", "true")
+          .build();
+    } else if ("simple".equalsIgnoreCase(analyzerType)) {
+
+    String revisionsPattern = "r\\d+";
+      analyzer = CustomAnalyzer.builder()
+          .addCharFilter(HTMLStripCharFilterFactory.class)
+          .withTokenizer(ClassicTokenizerFactory.class)
+          .addTokenFilter(LowerCaseFilterFactory.class)
+          .addTokenFilter(PatternReplaceFilterFactory.class, "pattern", revisionsPattern, "replacement", "", "replace", "all")
+          .build();
+    } else {
+      throw new Exception("undefined Analyzer of type '" + analyzerType + "'");
+    }
+
+    TopicModel topicModel = new EmbeddingsTopicModel(epochs, layerSize, hierarchicalVectors, includeComments, analyzer);
     topicModel.fit(issues);
 
     for (Issue issue : feed.getIssues().getIssues()) {

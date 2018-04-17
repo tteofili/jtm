@@ -36,27 +36,29 @@ public class JiraAnalysisToolTest {
   private final int epochs;
   private final int layerSize;
   private final int topN;
+  private final String analyzerType;
 
-  public JiraAnalysisToolTest(String resource, int epochs, int layerSize, int topN) {
+  public JiraAnalysisToolTest(String resource, int epochs, int layerSize, int topN, String analyzerType) {
     this.resource = resource;
     this.epochs = epochs;
     this.layerSize = layerSize;
     this.topN = topN;
+    this.analyzerType = analyzerType;
   }
 
   @Parameterized.Parameters
   public static Collection<Object[]> data() {
-    // resource, epochs, layerSize, topN
+    // resource, epochs, layerSize, topN, analyzerType
     return Arrays.asList(new Object[][] {
-        {"/opennlp-issues.xml", 2, 60, 3},
-        {"/lucene-issues.xml", 2, 60, 3},
-        {"/oak-issues.xml", 2, 60, 3},
+        {"/opennlp-issues.xml", 2, 60, 3, "simple"},
+//        {"/lucene-issues.xml", 2, 60, 3, "simple"},
+//        {"/oak-issues.xml", 2, 60, 3, "simple"},
     });
   }
 
   @Test
   public void testExecution() throws Exception {
-    JiraAnalysisTool jiraAnalysisTool = new JiraAnalysisTool(epochs, layerSize, topN, false, true, false);
+    JiraAnalysisTool jiraAnalysisTool = new JiraAnalysisTool(epochs, layerSize, topN, false, true, false, analyzerType);
     InputStream inputStream = getClass().getResourceAsStream(resource);
     Feed feed = new JiraFeedReader().read(inputStream);
     jiraAnalysisTool.analyze(feed);
