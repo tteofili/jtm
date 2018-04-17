@@ -51,14 +51,14 @@ public class JiraAnalysisToolTest {
     // resource, epochs, layerSize, topN, analyzerType
     return Arrays.asList(new Object[][] {
         {"/opennlp-issues.xml", 2, 60, 3, "simple"},
-//        {"/lucene-issues.xml", 2, 60, 3, "simple"},
-//        {"/oak-issues.xml", 2, 60, 3, "simple"},
+        {"/lucene-issues.xml", 2, 60, 3, "simple"},
+        {"/oak-issues.xml", 2, 60, 3, "simple"},
     });
   }
 
   @Test
   public void testExecution() throws Exception {
-    JiraAnalysisTool jiraAnalysisTool = new JiraAnalysisTool(epochs, layerSize, topN, false, true, false, analyzerType);
+    JiraAnalysisTool jiraAnalysisTool = new JiraAnalysisTool(epochs, layerSize, topN, false, true, analyzerType);
     InputStream inputStream = getClass().getResourceAsStream(resource);
     Feed feed = new JiraFeedReader().read(inputStream);
     jiraAnalysisTool.analyze(feed);
