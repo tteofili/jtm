@@ -38,7 +38,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-abstract class AbstractCommand implements Runnable, AnalysisTool {
+abstract class AbstractCommand implements Runnable {
 
     protected static final Logger log = LoggerFactory.getLogger(AbstractCommand.class);
 
@@ -133,12 +133,14 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
 
             setUp();
 
+            AnalysisTool analysisTool = getAnalisysTool();
+
             for (File exportedJiraFeed : exportedJiraFeeds) {
                 input = new FileInputStream(exportedJiraFeed);
                 feed = feedReader.read(input);
                 closeQuietly(input);
 
-                analyze(feed);
+                analysisTool.analyze(feed);
             }
 
             tearDown();
@@ -167,6 +169,8 @@ abstract class AbstractCommand implements Runnable, AnalysisTool {
             log.info( "+-----------------------------------------------------+" );
         }
     }
+
+    protected abstract AnalysisTool getAnalisysTool();
 
     protected void setUp() throws Exception {
         // do nothing by default

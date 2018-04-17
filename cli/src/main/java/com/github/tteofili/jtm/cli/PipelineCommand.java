@@ -15,7 +15,7 @@
  */
 package com.github.tteofili.jtm.cli;
 
-import com.github.tteofili.jtm.feed.Feed;
+import com.github.tteofili.jtm.AnalysisTool;
 import com.github.tteofili.jtm.pipeline.TopicModelPipeline;
 
 import picocli.CommandLine.Command;
@@ -24,8 +24,8 @@ import picocli.CommandLine.Command;
 public class PipelineCommand extends AbstractCommand {
 
     @Override
-    public void analyze(Feed feed) throws Exception {
-        new TopicModelPipeline().analyze(feed);
+    protected AnalysisTool getAnalisysTool() {
+        return new TopicModelPipeline();
     }
 
 }

@@ -20,6 +20,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Date;
 
+import com.github.tteofili.jtm.AnalysisTool;
 import com.github.tteofili.jtm.feed.BuildInfo;
 import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.IssuesCollection;
@@ -30,12 +31,17 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
 @Command(name = "merge", description = "Merges all the input feeds in a single one")
-public class MergeCommand extends AbstractCommand {
+public class MergeCommand extends AbstractCommand implements AnalysisTool {
 
     @Option(names = { "-o", "--output" }, description = "The output file where writing the resulting feed.")
     private File output;
 
     private Feed target;
+
+    @Override
+    protected AnalysisTool getAnalisysTool() {
+        return this;
+    }
 
     @Override
     protected void setUp() throws Exception {
