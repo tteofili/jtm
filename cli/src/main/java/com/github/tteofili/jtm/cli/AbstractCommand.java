@@ -167,6 +167,9 @@ abstract class AbstractCommand implements Runnable {
             }
 
             setUp();
+            if (topicsIndexer != null) {
+                topicsIndexer.setUp();
+            }
 
             AnalysisTool analysisTool = getAnalisysTool();
 
@@ -191,6 +194,9 @@ abstract class AbstractCommand implements Runnable {
             }
 
             tearDown();
+            if (topicsIndexer != null) {
+                topicsIndexer.tearDown();
+            }
 
             // write the aggregated results
             if (exportedJiraFeeds.length > 1 && !aggregatedTopics.isEmpty()) {
