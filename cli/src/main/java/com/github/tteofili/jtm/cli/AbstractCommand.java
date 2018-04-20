@@ -149,8 +149,6 @@ abstract class AbstractCommand implements Runnable {
         InputStream input = null;
         Feed feed = null;
 
-        Topics aggregatedTopics = new Topics();
-
         try {
             if (feedReader == null) {
                 throw new Exception("Feed reader '"
@@ -187,20 +185,12 @@ abstract class AbstractCommand implements Runnable {
                     if (topicsIndexer != null) {
                         topicsIndexer.index(feed, topics);
                     }
-
-                    // aggregate results
-                    aggregatedTopics.merge(topics);
                 }
             }
 
             tearDown();
             if (topicsIndexer != null) {
                 topicsIndexer.tearDown();
-            }
-
-            // write the aggregated results
-            if (exportedJiraFeeds.length > 1 && !aggregatedTopics.isEmpty()) {
-                writeTopics(aggregatedTopics, "aggregated-topics_" + System.currentTimeMillis());
             }
         } catch (Throwable t) {
             status = -1;

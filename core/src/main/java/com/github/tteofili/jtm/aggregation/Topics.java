@@ -15,35 +15,23 @@
  */
 package com.github.tteofili.jtm.aggregation;
 
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeSet;
-
-import com.github.tteofili.jtm.feed.Issue;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Topics {
 
-    private final Map<String, TopicRecurrence> recurrences = new HashMap<>();
+    private final Map<String, TreeSet<String>> recurrences = new ConcurrentHashMap<>();
 
-    public void add(Issue issue) {
-        issue.getTopics().forEach(topic -> {
-            getTopicRecurrence(topic).addRecurringIssue(issue.getKey().getValue());
-        });
+    public void add(String topic, String issueId) {
+        recurrences.computeIfAbsent(topic, k -> new TreeSet<String>())
+                   .add(issueId);
     }
 
-    public Collection<TopicRecurrence> asSortTopicRecurrences() {
-        return new TreeSet<>(recurrences.values());
-    }
-
-    public void merge(Topics source) {
-        source.recurrences.entrySet().forEach(topic -> {
-            getTopicRecurrence(topic.getKey()).addRecurringIssues(topic.getValue().getRecurringIssues());
-        });
-    }
-
-    private TopicRecurrence getTopicRecurrence(String topic) {
-        return recurrences.computeIfAbsent(topic, k -> new TopicRecurrence(k));
+    public Set<Entry<String, TreeSet<String>>> entrySet() {
+        return recurrences.entrySet();
     }
 
     public boolean isEmpty() {

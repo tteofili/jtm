@@ -15,9 +15,7 @@
  */
 package com.github.tteofili.jtm;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.charfilter.HTMLStripCharFilterFactory;
@@ -37,6 +35,7 @@ import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.Issue;
 import com.github.tteofili.jtm.tm.EmbeddingsTopicModel;
 import com.github.tteofili.jtm.tm.TopicModel;
+
 /**
  * Tool for analyzing Jira issues exported as XML.
  *
@@ -98,8 +97,7 @@ public class JiraAnalysisTool implements AnalysisTool {
           .addTokenFilter(TypeTokenFilterFactory.class, "types", "types.txt", "useWhitelist", "true")
           .build();
     } else if ("simple".equalsIgnoreCase(analyzerType)) {
-
-    String revisionsPattern = "r\\d+";
+      String revisionsPattern = "r\\d+";
       analyzer = CustomAnalyzer.builder()
           .addCharFilter(HTMLStripCharFilterFactory.class)
           .withTokenizer(ClassicTokenizerFactory.class)
@@ -107,7 +105,7 @@ public class JiraAnalysisTool implements AnalysisTool {
           .addTokenFilter(PatternReplaceFilterFactory.class, "pattern", revisionsPattern, "replacement", "", "replace", "all")
           .build();
     } else {
-      throw new Exception("undefined Analyzer of type '" + analyzerType + "'");
+      throw new IllegalArgumentException("undefined Analyzer of type '" + analyzerType + "'");
     }
 
     TopicModel topicModel = new EmbeddingsTopicModel(epochs, layerSize, hierarchicalVectors, includeComments, analyzer);
@@ -115,14 +113,17 @@ public class JiraAnalysisTool implements AnalysisTool {
 
     Topics topics = new Topics();
 
-    for (Issue issue : feed.getIssues().getIssues()) {
-      List<String> extractedTopics = new ArrayList<>(topicModel.extractTopics(topN, issue.getKey().getValue()));
-      issue.setTopics(extractedTopics);
-
-      log.info("Topics {} extracted from issue '{}'", extractedTopics, issue.getTitle());
-
-      topics.add(issue);
-    }
+    feed.getIssues()
+        .getIssues()
+        .parallelStream()
+        .forEach(issue -> {
+            topicModel.extractTopics(topN, issue.getKey().getValue())
+                      .parallelStream()
+                      .forEach(topic -> {
+                          log.info("Topic '{}' extracted from issue '{}'", topic, issue.getTitle());
+                          topics.add(topic, issue.getKey().getValue());
+                      });
+        });
 
     return topics;
   }

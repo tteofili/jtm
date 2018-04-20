@@ -47,12 +47,13 @@ public class TopicsWriter {
 
         generator.writeStartArray();
 
-        topics.asSortTopicRecurrences().forEach(recurrence -> {
+        topics.entrySet().forEach(entry -> {
             generator.writeStartObject()
-                     .write("topic", recurrence.getTopic())
+                     .write("topic", entry.getKey())
+                     .write("occurrences", entry.getValue().size())
                      .writeStartArray("issues");
 
-            recurrence.getRecurringIssues().forEach(issue -> generator.write(issue));
+            entry.getValue().forEach(issue -> generator.write(issue));
 
             generator.writeEnd().writeEnd();
         });

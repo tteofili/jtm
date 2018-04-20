@@ -18,7 +18,9 @@ package com.github.tteofili.jtm.aggregation.es;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.TreeSet;
 
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.transport.TransportClient;
@@ -28,7 +30,6 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.xpack.client.PreBuiltXPackTransportClient;
 
-import com.github.tteofili.jtm.aggregation.TopicRecurrence;
 import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.aggregation.TopicsIndexer;
 import com.github.tteofili.jtm.feed.Feed;
@@ -78,18 +79,18 @@ public class ElasticSearchTopicsIndexer implements TopicsIndexer {
 
         String type = "doc";
 
-        for (TopicRecurrence topicRecurrence : extractedTopics.asSortTopicRecurrences()) {
+        for (Entry<String, TreeSet<String>> entry : extractedTopics.entrySet()) {
             XContentBuilder jsonBuilder = XContentFactory.jsonBuilder()
-                                                         .startObject()
-                                                         .field("topic", topicRecurrence.getTopic())
-                                                         .array("issues", topicRecurrence.getRecurringIssues())
-                                                         .endObject();
+                            .startObject()
+                            .field("topic", entry.getKey())
+                            .array("issues", entry.getValue())
+                            .endObject();
 
-            IndexResponse response = client.prepareIndex(indexName, type, topicRecurrence.getTopic())
-                                           .setSource(jsonBuilder)
-                                           .get();
+            IndexResponse response = client.prepareIndex(indexName, type, entry.getKey())
+              .setSource(jsonBuilder)
+              .get();
             // TODO handle the result
-          }
+        }
     }
 
     @Override
