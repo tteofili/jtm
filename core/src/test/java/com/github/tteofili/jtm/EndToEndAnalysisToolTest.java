@@ -27,10 +27,10 @@ import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.jira.JiraFeedReader;
 
 /**
- * Tests for {@link JiraAnalysisTool}
+ * Tests for {@link EndToEndAnalysisTool}
  */
 @RunWith(Parameterized.class)
-public class JiraAnalysisToolTest {
+public class EndToEndAnalysisToolTest {
 
   private final String resource;
   private final int epochs;
@@ -38,7 +38,7 @@ public class JiraAnalysisToolTest {
   private final int topN;
   private final String analyzerType;
 
-  public JiraAnalysisToolTest(String resource, int epochs, int layerSize, int topN, String analyzerType) {
+  public EndToEndAnalysisToolTest(String resource, int epochs, int layerSize, int topN, String analyzerType) {
     this.resource = resource;
     this.epochs = epochs;
     this.layerSize = layerSize;
@@ -58,10 +58,10 @@ public class JiraAnalysisToolTest {
 
   @Test
   public void testExecution() throws Exception {
-    JiraAnalysisTool jiraAnalysisTool = new JiraAnalysisTool(epochs, layerSize, topN, false, true, analyzerType);
+    EndToEndAnalysisTool endToEndAnalysisTool = new EndToEndAnalysisTool(epochs, layerSize, topN, false, true, analyzerType, "target/"+resource+"-"+System.currentTimeMillis()+".zip");
     InputStream inputStream = getClass().getResourceAsStream(resource);
     Feed feed = new JiraFeedReader().read(inputStream);
-    jiraAnalysisTool.analyze(feed);
+    endToEndAnalysisTool.analyze(feed);
     inputStream.close();
   }
 }

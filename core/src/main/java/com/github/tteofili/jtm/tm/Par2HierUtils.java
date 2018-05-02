@@ -49,7 +49,7 @@ public class Par2HierUtils {
    * @param k the no. of centroids
    * @return a map doc->hierarchical vector
    */
-  static Map<String, INDArray> getPar2Hier(JiraIterator iterator,
+  static Map<String, INDArray> getPar2Hier(IssueIterator iterator,
                                            WeightLookupTable<VocabWord> lookupTable,
                                            List<String> labels, int k, Method method) {
     Collections.sort(labels);

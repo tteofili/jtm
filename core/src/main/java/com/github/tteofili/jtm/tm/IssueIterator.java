@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.github.tteofili.jtm.feed.Identifiable;
 import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
 import org.deeplearning4j.text.documentiterator.LabelledDocument;
 import org.deeplearning4j.text.documentiterator.LabelsSource;
@@ -32,7 +33,7 @@ import com.google.common.base.Joiner;
 /**
  * DL4J {@link LabelAwareIterator} over {@link Issue}s
  */
-public class JiraIterator implements LabelAwareIterator {
+public class IssueIterator implements LabelAwareIterator {
 
   private final Collection<Issue> issues;
   private final boolean includeComments;
@@ -46,7 +47,7 @@ public class JiraIterator implements LabelAwareIterator {
   private LabelsSource labelSource;
 
 
-  public JiraIterator(Collection<Issue> issues, boolean includeComments) {
+  public IssueIterator(Collection<Issue> issues, boolean includeComments) {
     this.issues = issues;
     this.includeComments = includeComments;
     this.commentsList = new LinkedList<>();
@@ -58,10 +59,13 @@ public class JiraIterator implements LabelAwareIterator {
     List<String> labels = new LinkedList<>();
 
     for (Issue issue : issues) {
-      labels.add(issue.getKey().getValue());
-      if (includeComments) {
-        for (Comment jiraComment : issue.getComments()) {
-          labels.add(jiraComment.getId());
+      Identifiable key = issue.getKey();
+      if (key != null) {
+        labels.add(key.getValue());
+        if (includeComments) {
+          for (Comment jiraComment : issue.getComments()) {
+            labels.add(jiraComment.getId());
+          }
         }
       }
     }
@@ -77,7 +81,7 @@ public class JiraIterator implements LabelAwareIterator {
   }
 
   private String nextSentence() {
-    String sentence;
+    String sentence = "";
     if (includeComments && commentIterator != null && commentIterator.hasNext()) {
       Comment jiraComment = commentIterator.next();
       currentLabel = jiraComment.getId();
@@ -87,11 +91,17 @@ public class JiraIterator implements LabelAwareIterator {
       List<Comment> comments = currentIssue.getComments();
       this.commentsList.addAll(comments);
       commentIterator = comments.iterator();
-      currentLabel = currentIssue.getKey().getValue();
-      sentence = Joiner.on(' ').join(currentIssue.getLabels(),
-                                     currentIssue.getTitle(),
-                                     currentIssue.getDescription(),
-                                     currentIssue.getSummary());
+      Identifiable key = currentIssue.getKey();
+      if (key != null) {
+        currentLabel = key.getValue();
+        if (currentIssue.getLabels() != null && currentIssue.getTitle() != null &&
+            currentIssue.getDescription() != null && currentIssue.getSummary() != null) {
+          sentence = Joiner.on(' ').join(currentIssue.getLabels(),
+              currentIssue.getTitle(),
+              currentIssue.getDescription(),
+              currentIssue.getSummary());
+        }
+      }
     }
 
     return sentence;

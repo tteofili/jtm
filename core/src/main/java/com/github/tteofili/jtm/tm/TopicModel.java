@@ -18,6 +18,7 @@ package com.github.tteofili.jtm.tm;
 import java.io.IOException;
 import java.util.Collection;
 
+import com.github.tteofili.jtm.feed.Identifiable;
 import com.github.tteofili.jtm.feed.Issue;
 
 /**
@@ -37,5 +38,13 @@ public interface TopicModel {
    * @param documentId the document identifier
    * @return a collection of extracted topics
    */
-  Collection<String> extractTopics(int topN, String documentId);
+  Collection<String> extractTopics(int topN, Identifiable documentId);
+
+  /**
+   * Extract top {@code n} topics for a given piece of text
+   * @param topN number of topics
+   * @param text the text to be analyzed
+   * @return a collection of extracted topics
+   */
+  Collection<String> extractTopics(int topN, String text);
 }

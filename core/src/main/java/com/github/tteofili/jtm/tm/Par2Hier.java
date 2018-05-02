@@ -46,7 +46,7 @@ import lombok.NonNull;
 import lombok.Setter;
 
 /**
- * Simplified version of Par2Hier implementation for DL4j for {@link JiraIssue}s
+ * Simplified version of Par2Hier implementation for DL4j for {@link com.github.tteofili.jtm.feed.Issue}s
  *
  */
 public class Par2Hier extends ParagraphVectors {
@@ -57,7 +57,7 @@ public class Par2Hier extends ParagraphVectors {
   protected LabelsSource labelsSource;
   @Getter
   @Setter
-  protected transient JiraIterator labelAwareIterator;
+  protected transient IssueIterator labelAwareIterator;
   protected INDArray labelsMatrix;
   protected List<VocabWord> labelsList = new ArrayList<>();
   protected boolean normalizedLabels = false;
@@ -71,7 +71,7 @@ public class Par2Hier extends ParagraphVectors {
     this.k = k;
 
     this.labelsSource = paragraphVectors.getLabelsSource();
-    this.labelAwareIterator = (JiraIterator) paragraphVectors.getLabelAwareIterator();
+    this.labelAwareIterator = (IssueIterator) paragraphVectors.getLabelAwareIterator();
     this.vocab = paragraphVectors.getVocab();
 
     @SuppressWarnings("unchecked") // verified in source code
@@ -401,5 +401,15 @@ public class Par2Hier extends ParagraphVectors {
   @Override
   public WeightLookupTable<VocabWord> getLookupTable() {
     return this.lookupTable;
+  }
+
+  @Override
+  public WeightLookupTable lookupTable() {
+    return this.lookupTable;
+  }
+
+  @Override
+  public VocabCache<VocabWord> getVocab() {
+    return this.lookupTable.getVocabCache();
   }
 }

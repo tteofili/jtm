@@ -15,23 +15,29 @@
  */
 package com.github.tteofili.jtm.tm;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
 
+import com.github.tteofili.jtm.AnalysisUtils;
+import com.github.tteofili.jtm.feed.Identifiable;
+import com.github.tteofili.jtm.feed.Issue;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
+import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
-import org.deeplearning4j.models.word2vec.Word2Vec;
+import org.deeplearning4j.models.word2vec.VocabWord;
+import org.deeplearning4j.models.word2vec.wordstore.VocabCache;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.github.tteofili.jtm.feed.Issue;
 
 import opennlp.tools.postag.POSModel;
 import opennlp.tools.postag.POSTagger;
@@ -42,7 +48,9 @@ import opennlp.tools.postag.POSTaggerME;
  */
 public class EmbeddingsTopicModel implements TopicModel {
 
-  private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
+  private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD", "RB", "VBG"};
+
+  private static final Pattern pattern = Pattern.compile("\\w+-\\d+");
 
   private final Logger log = LoggerFactory.getLogger(getClass());
 
@@ -51,17 +59,21 @@ public class EmbeddingsTopicModel implements TopicModel {
   private final boolean hierarchicalVectors;
   private final boolean includeComments;
   private final Analyzer analyzer;
+  private final String vectorsOutputFile;
+
   private final POSTagger tagger;
 
   private ParagraphVectors paragraphVectors;
-  private Word2Vec word2vec;
+//  private Word2Vec word2vec;
 
-  public EmbeddingsTopicModel(int epochs, int layerSize, boolean hierarchicalVectors, boolean includeComments, Analyzer analyzer) {
+  public EmbeddingsTopicModel(int epochs, int layerSize, boolean hierarchicalVectors, boolean includeComments, Analyzer analyzer, String vectorsOutputFile) {
+    // TODO : move this into some configuration / builder object
     this.epochs = epochs;
     this.layerSize = layerSize;
     this.hierarchicalVectors = hierarchicalVectors;
     this.includeComments = includeComments;
     this.analyzer = analyzer;
+    this.vectorsOutputFile = vectorsOutputFile;
     InputStream posStream = getClass().getResourceAsStream("/en-pos-maxent.bin");
     POSModel posModel;
     try {
@@ -70,6 +82,34 @@ public class EmbeddingsTopicModel implements TopicModel {
       throw new RuntimeException(e);
     }
     this.tagger = new POSTaggerME(posModel);
+    Arrays.sort(stopTags);
+  }
+
+  public EmbeddingsTopicModel(File file) throws IOException {
+    InputStream posStream = getClass().getResourceAsStream("/en-pos-maxent.bin");
+    POSModel posModel;
+    try {
+      posModel = new POSModel(posStream);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    this.tagger = new POSTaggerME(posModel);
+
+    this.paragraphVectors = WordVectorSerializer.readParagraphVectors(file);
+    this.paragraphVectors.setTokenizerFactory(new LuceneTokenizerFactory());
+
+    // TODO : move this into some configuration / builder object
+    this.layerSize = this.paragraphVectors.getLayerSize();
+    this.hierarchicalVectors = false;
+    this.includeComments = true;
+    try {
+      this.analyzer = AnalysisUtils.simpleAnalyzer();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    this.vectorsOutputFile = file.getAbsolutePath();
+    this.epochs = 5;
+    Arrays.sort(stopTags);
   }
 
   public void fit(Collection<Issue> issues) throws IOException {
@@ -78,28 +118,17 @@ public class EmbeddingsTopicModel implements TopicModel {
 
     log.info("fitting on {} issues", issues.size());
 
-    JiraIterator iterator = new JiraIterator(issues, includeComments);
+    IssueIterator iterator = new IssueIterator(issues, includeComments);
 
     TokenizerFactory tf = new LuceneTokenizerFactory(analyzer);
-
-    word2vec = new Word2Vec.Builder()
-        .iterate(iterator)
-        .epochs(epochs)
-        .layerSize(layerSize)
-        .tokenizerFactory(tf)
-        .build();
-    word2vec.fit();
-
-    log.info("word2vec model fit");
-
-    iterator.reset();
 
     ParagraphVectors issuesParagraphVectors = new ParagraphVectors.Builder()
         .iterate(iterator)
         .epochs(epochs)
         .layerSize(layerSize)
         .tokenizerFactory(tf)
-        .useExistingWordVectors(word2vec)
+        .trainWordVectors(true)
+        .useUnknown(true)
         .build();
     issuesParagraphVectors.fit();
 
@@ -108,7 +137,7 @@ public class EmbeddingsTopicModel implements TopicModel {
     iterator.reset();
 
     if (hierarchicalVectors) {
-      Par2Hier par2Hier = new Par2Hier(issuesParagraphVectors, Par2HierUtils.Method.SUM, 3);
+      Par2Hier par2Hier = new Par2Hier(issuesParagraphVectors, Par2HierUtils.Method.CLUSTER, 3);
       par2Hier.fit();
 
       log.info("par2hier model fit");
@@ -117,38 +146,68 @@ public class EmbeddingsTopicModel implements TopicModel {
     } else {
       paragraphVectors = issuesParagraphVectors;
     }
+
+    if (vectorsOutputFile != null && vectorsOutputFile.trim().length() > 0) {
+      WordVectorSerializer.writeParagraphVectors(paragraphVectors, new File(vectorsOutputFile));
+    }
+
   }
 
-
   @Override
-  public Collection<String> extractTopics(int topN, String documentId) {
-    INDArray issueVector = paragraphVectors.getLookupTable().vector(documentId);
-    Collection<String> nearestWords = word2vec.wordsNearest(issueVector, topN);
+  public Collection<String> extractTopics(int topN, Identifiable documentId) {
+    INDArray issueVector = paragraphVectors.getLookupTable().vector(documentId.getValue());
+    return getTopicsForVector(topN, issueVector);
+  }
+
+  private Collection<String> getTopicsForVector(int topN, INDArray vector) {
+    Collection<String> nearestWords = paragraphVectors.wordsNearest(vector, topN);
 
     Collection<String> nearestLabelsWords = new LinkedList<>();
-    for (String label : paragraphVectors.nearestLabels(issueVector, topN)) {
+    for (String label : paragraphVectors.nearestLabels(vector, topN)) {
       INDArray nearestIssueVector = paragraphVectors.getLookupTable().vector(label);
-      nearestLabelsWords.addAll(word2vec.wordsNearest(nearestIssueVector, topN));
+      nearestLabelsWords.addAll(paragraphVectors.wordsNearest(nearestIssueVector, topN));
     }
 
     nearestWords.addAll(nearestLabelsWords);
 
-    INDArray wordVectorsMean = word2vec.getWordVectorsMean(nearestWords);
-    return filterTopics(word2vec.wordsNearest(wordVectorsMean, topN));
+    INDArray wordVectorsMean = paragraphVectors.getWordVectorsMean(nearestWords);
+    Collection<String> topics = paragraphVectors.wordsNearest(wordVectorsMean, topN);
+    return filterTopics(topics);
+  }
+
+  @Override
+  public Collection<String> extractTopics(int topN, String text) {
+    try {
+      log.debug("{} nearest labels {}", text, paragraphVectors.nearestLabels(text, topN));
+      List<String> tokens = paragraphVectors.getTokenizerFactory().create(text).getTokens();
+      INDArray textVector = paragraphVectors.getWordVectorsMean(tokens);
+      return getTopicsForVector(topN, textVector);
+    } catch (Throwable t) {
+      return Collections.emptySet();
+    }
   }
 
   private Collection<String> filterTopics(Collection<String> topics) {
+    log.debug("filtering {} topics", topics.size());
     Collection<String> toRemove = new LinkedList<>();
     for (String t : topics) {
       String[] tags = tagger.tag(new String[] {t});
-      String tag = tags[0];
-      boolean stopTag = Arrays.binarySearch(stopTags, tag) >= 0;
+//      log.info("{} : {}", t, Arrays.toString(tags));
+      boolean stopTag = false;
+      for (String tag : tags) {
+        stopTag = Arrays.binarySearch(stopTags, tag) >= 0;
+        if (stopTag) {
+          break;
+        }
+      }
       List<String> labels = paragraphVectors.getLabelsSource().getLabels();
-      if (stopTag || labels.contains(t.toUpperCase()) || labels.contains(t) || StringUtils.isNumeric(t)) {
+      if (stopTag || labels.contains(t.toUpperCase()) || labels.contains(t) || StringUtils.isNumeric(t) ||
+          pattern.matcher(t).find()) {
         toRemove.add(t);
       }
     }
     topics.removeAll(toRemove);
+    log.debug("filtered {} topics", topics.size());
     return topics;
   }
 

@@ -16,7 +16,7 @@
 package com.github.tteofili.jtm.cli;
 
 import com.github.tteofili.jtm.AnalysisTool;
-import com.github.tteofili.jtm.JiraAnalysisTool;
+import com.github.tteofili.jtm.EndToEndAnalysisTool;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -40,16 +40,20 @@ public class AnalyzeCommand extends AbstractCommand {
     private boolean includeComments = true;
 
     @Option(names = {"-a", "--analyzer"}, description = "Analyzer.")
-    private String analyzerType = "simple";
+    private String analyzerType = "opennlp";
+
+    @Option(names = {"-vo", "--vectors-output"}, description = "Vectors output file.")
+    private String vectorsOutputFile = "issue-embeddings.zip";
 
     @Override
     protected AnalysisTool getAnalisysTool() {
-        return new JiraAnalysisTool(epochs,
+        return new EndToEndAnalysisTool(epochs,
                                     layerSize,
                                     topN,
                                     hierarchicalVectors,
                                     includeComments,
-                                    analyzerType);
+                                    analyzerType,
+                                    vectorsOutputFile);
     }
 
 }

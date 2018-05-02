@@ -17,58 +17,42 @@ package com.github.tteofili.jtm.cli;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ServiceLoader;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.github.tteofili.jtm.AnalysisTool;
-import com.github.tteofili.jtm.EndToEndAnalysisTool;
-import com.github.tteofili.jtm.aggregation.Topics;
-import com.github.tteofili.jtm.aggregation.TopicsIndexer;
-import com.github.tteofili.jtm.aggregation.TopicsWriter;
-import com.github.tteofili.jtm.feed.Feed;
-import com.github.tteofili.jtm.feed.reader.FeedReader;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.core.joran.spi.JoranException;
+import com.github.tteofili.jtm.AnalysisTool;
+import com.github.tteofili.jtm.EndToEndAnalysisTool;
+import com.github.tteofili.jtm.StaticAnalysisTool;
+import com.github.tteofili.jtm.aggregation.Topics;
+import com.github.tteofili.jtm.aggregation.TopicsWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.Parameters;
 
-abstract class AbstractCommand implements Runnable {
+@Command(name = "nearest")
+public class NearestCommand implements Runnable {
 
-    protected static final Logger log = LoggerFactory.getLogger(AbstractCommand.class);
+    private static final Logger log = LoggerFactory.getLogger(NearestCommand.class);
 
     @Option(names = { "-h", "--help" }, usageHelp = true, description = "Display the usage message.")
     private boolean helpRequested = false;
 
-    @Option(names = { "-V", "--version" }, versionHelp = true, description = "Display version info.")
-    private boolean versionInfoRequested = false;
+    @Option(names = {"-mf", "--model-file"}, description = "Vectors model file.", required = true)
+    private String pvFile = "";
 
-    @Option(names = { "-X", "--verbose" }, description = "Produce execution debug output.")
-    private boolean verbose = false;
-
-    @Option( names = { "-q", "--quiet" }, description = "Log errors only." )
-    private boolean quiet = false;
-
-    @Option( names = { "-r", "--reader" }, description = "The reader type name.", required = true )
-    private String readerType;
-
-    @Option(names = { "-i", "--index" }, description = "The index system to be used.")
-    private String index = null;
+    @Option(names = { "-t", "--top-n" }, description = "Top.")
+    private int topN = 5;
 
     @Option( names = { "-o", "--output" }, description = "The directory where writing the extracted topics.")
     protected File outputDir = new File(System.getProperty("user.dir"));
 
-    @Parameters(index = "0", description = "Exported JIRA XML feed file(s).", arity = "*")
-    private File[] exportedJiraFeeds;
+    @CommandLine.Parameters(index = "0", description = "Texts to analyse.", arity = "*")
+    private String[] texts;
 
     private final TopicsWriter topicsWriter = new TopicsWriter();
 
@@ -85,18 +69,7 @@ abstract class AbstractCommand implements Runnable {
 
         // setup the logging stuff
 
-        if ( quiet )
-        {
-            System.setProperty( "logging.level", "ERROR" );
-        }
-        else if ( verbose )
-        {
-            System.setProperty( "logging.level", "DEBUG" );
-        }
-        else
-        {
-            System.setProperty( "logging.level", "INFO" );
-        }
+        System.setProperty( "logging.level", "INFO" );
 
         // assume SLF4J is bound to logback in the current environment
         final LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -129,74 +102,30 @@ abstract class AbstractCommand implements Runnable {
             outputDir.mkdirs();
         }
 
-        // load all the available readers in the classpath
-        Map<String, FeedReader> readers = new HashMap<>();
-        ServiceLoader.load(FeedReader.class)
-                     .forEach(feedReader -> readers.put(feedReader.getSourceType(), feedReader));
-        FeedReader feedReader = readers.get(readerType);
-
-        // load all the available indexers in the classpath
-        Map<String, TopicsIndexer> indexers = new HashMap<>();
-        ServiceLoader.load(TopicsIndexer.class)
-                     .forEach(topicsIndexer -> indexers.put(topicsIndexer.getIndexerName(), topicsIndexer));
-        TopicsIndexer topicsIndexer = null;
-        if (index != null) {
-            topicsIndexer = indexers.get(index);
-        }
-
         int status = 1;
         Throwable error = null;
-        InputStream input = null;
-        Feed feed = null;
 
         try {
-            if (feedReader == null) {
-                throw new Exception("Feed reader '"
-                                    + readerType
-                                    + "' does not exists, availables are: "
-                                    + readers.keySet());
-            }
-
-            if (index != null && topicsIndexer == null) {
-                throw new Exception("Topics Indexer '"
-                                    + index
-                                    + "' does not exists, availables are: "
-                                    + indexers.keySet());
-            }
-
             setUp();
-            if (topicsIndexer != null) {
-                topicsIndexer.setUp();
-            }
 
             AnalysisTool analysisTool = getAnalisysTool();
 
-            for (File exportedJiraFeed : exportedJiraFeeds) {
-                input = new FileInputStream(exportedJiraFeed);
-                feed = feedReader.read(input);
-                closeQuietly(input);
-
-                Topics topics = analysisTool.analyze(feed);
+            int i = 1;
+            for (String text : texts) {
+                Topics topics = analysisTool.analyze(text);
                 if (topics != null) {
                     // write each file per topic
-                    String fileName = exportedJiraFeed.getName();
+                    String fileName = "topics_"+i;
                     writeTopics(topics, fileName.substring(0, fileName.lastIndexOf( '.')));
-
-                    if (topicsIndexer != null) {
-                        topicsIndexer.index(feed, topics);
-                    }
                 }
+                i++;
             }
 
             tearDown();
-            if (topicsIndexer != null) {
-                topicsIndexer.tearDown();
-            }
+
         } catch (Throwable t) {
             status = -1;
             error = t;
-        } finally {
-            closeQuietly(input);
         }
 
         log.info( "+-----------------------------------------------------+" );
@@ -205,20 +134,12 @@ abstract class AbstractCommand implements Runnable {
 
         if ( status < 0 )
         {
-            if ( verbose )
-            {
-                log.error( "Execution terminated with errors", error );
-            }
-            else
-            {
-                log.error( "Execution terminated with errors: {}", error.getMessage() );
-            }
+            error.printStackTrace();
+            log.error( "Execution terminated with errors: {}", error.getMessage() );
 
             log.info( "+-----------------------------------------------------+" );
         }
     }
-
-    protected abstract AnalysisTool getAnalisysTool();
 
     protected void setUp() throws Exception {
         // do nothing by default
@@ -243,6 +164,14 @@ abstract class AbstractCommand implements Runnable {
                 // do nothing
             }
         }
+    }
+
+    private AnalysisTool getAnalisysTool() {
+        File paragraphVectorsModelFile = new File(pvFile);
+        if (!paragraphVectorsModelFile.exists()) {
+            throw new RuntimeException("file "+pvFile+" doesn't exist");
+        }
+        return new StaticAnalysisTool(paragraphVectorsModelFile, topN);
     }
 
 }

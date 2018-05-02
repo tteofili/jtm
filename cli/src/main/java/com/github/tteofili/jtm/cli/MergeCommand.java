@@ -67,6 +67,11 @@ public class MergeCommand extends AbstractCommand implements AnalysisTool {
     }
 
     @Override
+    public Topics analyze(String text) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected void tearDown() throws Exception {
         File outputFile = new File(outputDir, "aggregated-issues" + System.currentTimeMillis() + ".xml");
 

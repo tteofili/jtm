@@ -15,11 +15,15 @@
  */
 package com.github.tteofili.jtm;
 
+import java.io.IOException;
+
 import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.feed.Feed;
 
 public interface AnalysisTool {
 
     Topics analyze(Feed feed) throws Exception;
+
+    Topics analyze(String text) throws IOException;
 
 }

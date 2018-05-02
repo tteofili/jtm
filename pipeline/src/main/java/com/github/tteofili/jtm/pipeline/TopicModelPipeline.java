@@ -15,14 +15,13 @@
  */
 package com.github.tteofili.jtm.pipeline;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
-import java.util.TreeSet;
 
+import com.github.tteofili.jtm.EndToEndAnalysisTool;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -47,7 +46,6 @@ import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFac
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 import com.github.tteofili.jtm.AnalysisTool;
-import com.github.tteofili.jtm.JiraAnalysisTool;
 import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.Issue;
@@ -76,16 +74,16 @@ public class TopicModelPipeline implements AnalysisTool {
     // opennlp models
 
     // TODO are they useful?
-    // InputStream sentenceModelStream = JiraAnalysisTool.class.getResourceAsStream("/en-sent.bin");
+    // InputStream sentenceModelStream = EndToEndAnalysisTool.class.getResourceAsStream("/en-sent.bin");
     // SentenceModel sentdetectModel = new SentenceModel(sentenceModelStream);
 
-    InputStream tokenizerModelStream = JiraAnalysisTool.class.getResourceAsStream("/en-token.bin");
+    InputStream tokenizerModelStream = EndToEndAnalysisTool.class.getResourceAsStream("/en-token.bin");
     TokenizerModel tokenizerModel = new TokenizerModel(tokenizerModelStream);
 
-    InputStream posStream = JiraAnalysisTool.class.getResourceAsStream("/en-pos-maxent.bin");
+    InputStream posStream = EndToEndAnalysisTool.class.getResourceAsStream("/en-pos-maxent.bin");
     POSModel posModel = new POSModel(posStream);
 
-    InputStream chunkerStream = JiraAnalysisTool.class.getResourceAsStream("/en-chunker.bin");
+    InputStream chunkerStream = EndToEndAnalysisTool.class.getResourceAsStream("/en-chunker.bin");
     ChunkerModel chunkerModel = new ChunkerModel(chunkerStream);
 
     final StreamExecutionEnvironment env =
@@ -253,6 +251,11 @@ public class TopicModelPipeline implements AnalysisTool {
 
     env.execute();
     return null;
+  }
+
+  @Override
+  public Topics analyze(String text) throws IOException {
+    throw new UnsupportedOperationException();
   }
 
   private static class Embeddings {
