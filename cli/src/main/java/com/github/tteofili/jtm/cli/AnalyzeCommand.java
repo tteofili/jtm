@@ -39,11 +39,14 @@ public class AnalyzeCommand extends AbstractCommand {
     @Option(names = { "-c", "--include-comments" }, description = "Include comments.")
     private boolean includeComments = true;
 
+    @Option(names = { "-g", "--generate-clusters" }, description = "Generate clusters.")
+    private boolean generateClusters = false;
+
     @Option(names = {"-a", "--analyzer"}, description = "Analyzer.")
     private String analyzerType = "opennlp";
 
     @Option(names = {"-vo", "--vectors-output"}, description = "Vectors output file.")
-    private String vectorsOutputFile = "issue-embeddings.zip";
+    private String vectorsOutputFile = null;
 
     @Override
     protected AnalysisTool getAnalisysTool() {
@@ -52,6 +55,7 @@ public class AnalyzeCommand extends AbstractCommand {
                                     topN,
                                     hierarchicalVectors,
                                     includeComments,
+                                    generateClusters,
                                     analyzerType,
                                     vectorsOutputFile);
     }

@@ -47,7 +47,7 @@ public class IssueIterator implements LabelAwareIterator {
   private LabelsSource labelSource;
 
 
-  public IssueIterator(Collection<Issue> issues, boolean includeComments) {
+  IssueIterator(Collection<Issue> issues, boolean includeComments) {
     this.issues = issues;
     this.includeComments = includeComments;
     this.commentsList = new LinkedList<>();
@@ -85,7 +85,7 @@ public class IssueIterator implements LabelAwareIterator {
     if (includeComments && commentIterator != null && commentIterator.hasNext()) {
       Comment jiraComment = commentIterator.next();
       currentLabel = jiraComment.getId();
-      sentence = jiraComment.toString();
+      sentence = jiraComment.getText();
     } else {
       currentIssue = issuesIterator.next();
       List<Comment> comments = currentIssue.getComments();
@@ -96,10 +96,10 @@ public class IssueIterator implements LabelAwareIterator {
         currentLabel = key.getValue();
         if (currentIssue.getLabels() != null && currentIssue.getTitle() != null &&
             currentIssue.getDescription() != null && currentIssue.getSummary() != null) {
-          sentence = Joiner.on(' ').join(currentIssue.getLabels(),
-              currentIssue.getTitle(),
+          sentence = Joiner.on(' ').join(currentIssue.getTitle(),
+              currentIssue.getSummary(),
               currentIssue.getDescription(),
-              currentIssue.getSummary());
+              currentIssue.getLabels());
         }
       }
     }

@@ -12,6 +12,7 @@ import org.apache.lucene.analysis.charfilter.HTMLStripCharFilterFactory;
 import org.apache.lucene.analysis.core.LowerCaseFilterFactory;
 import org.apache.lucene.analysis.custom.CustomAnalyzer;
 import org.apache.lucene.analysis.standard.ClassicTokenizerFactory;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;
@@ -26,15 +27,13 @@ public class EmbeddingsTopicModelTest {
   public void testFitWithEmptyIssues() throws Exception {
     int epochs = 1;
     int layerSize = 50;
-    boolean hv = true;
-    boolean comments = true;
     Analyzer analyzer = CustomAnalyzer.builder()
         .addCharFilter(HTMLStripCharFilterFactory.class)
         .withTokenizer(ClassicTokenizerFactory.class)
         .addTokenFilter(LowerCaseFilterFactory.class)
         .build();
     String output = "target/etm-pv.zip";
-    EmbeddingsTopicModel embeddingsTopicModel = new EmbeddingsTopicModel(epochs, layerSize, hv, comments, analyzer, output);
+    EmbeddingsTopicModel embeddingsTopicModel = new EmbeddingsTopicModel(epochs, layerSize, true, true, false, analyzer, output);
 
     Collection<Issue> issues = new LinkedList<>();
     Issue e = new Issue();
@@ -52,15 +51,13 @@ public class EmbeddingsTopicModelTest {
   public void testFitWithOneIssue() throws Exception {
     int epochs = 1;
     int layerSize = 50;
-    boolean hv = true;
-    boolean comments = true;
     Analyzer analyzer = CustomAnalyzer.builder()
         .addCharFilter(HTMLStripCharFilterFactory.class)
         .withTokenizer(ClassicTokenizerFactory.class)
         .addTokenFilter(LowerCaseFilterFactory.class)
         .build();
     String output = "target/etm-pv.zip";
-    EmbeddingsTopicModel embeddingsTopicModel = new EmbeddingsTopicModel(epochs, layerSize, hv, comments, analyzer, output);
+    EmbeddingsTopicModel embeddingsTopicModel = new EmbeddingsTopicModel(epochs, layerSize, true, true, false, analyzer, output);
 
     Collection<Issue> issues = new LinkedList<>();
     Issue e = new Issue();
@@ -76,16 +73,13 @@ public class EmbeddingsTopicModelTest {
     embeddingsTopicModel.fit(issues);
   }
 
+  @Ignore
   @Test
   public void testLoadFromFile() throws Exception {
-    String[] testStrings = new String[] {"thomas mueller", "vikas saurabh", "tommaso teofili", "ana vinatoru",
-        "paul chibulcuteanu", "peter klassen", "daniel hasler", "lucene", "documents", "mduerig", "frm",
-        "anchela", "tommaso", "francesco mari", "michael duerig", "tarmk", "frustration", "expectations",
-    "alex saar", "replication", "wdyt", "fuck", "wtf", "asanso", "antonio sanso", "simo tripodi", "simone tropodi",
-    "stripodi"};
+    String[] testStrings = new String[] {"tommaso teofili", "tommaso", "francesco mari", "frustration", "expectations", "wdyt", "wtf", "antonio sanso", "simo tripodi", "simone tropodi",
+    };
     int topN = 20;
-//    EmbeddingsTopicModel model = new EmbeddingsTopicModel(new File("/Users/teofili/dev/jtm/cli/target/jtm-cli-0.1-SNAPSHOT/vectors.zip"));
-    EmbeddingsTopicModel model = new EmbeddingsTopicModel(new File("/Users/teofili/Desktop/issue-analysis/oakgranitenpr_p2hvectors.zip"));
+    EmbeddingsTopicModel model = new EmbeddingsTopicModel(new File("target/issue-embeddings.zip"));
     for (String ts : testStrings) {
       Collection<String> topics = model.extractTopics(topN, ts);
       System.out.println(ts + " -> " + topics);

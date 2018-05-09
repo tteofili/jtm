@@ -19,12 +19,11 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
+import com.github.tteofili.jtm.feed.Feed;
+import com.github.tteofili.jtm.feed.jira.JiraFeedReader;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-import com.github.tteofili.jtm.feed.Feed;
-import com.github.tteofili.jtm.feed.jira.JiraFeedReader;
 
 /**
  * Tests for {@link EndToEndAnalysisTool}
@@ -58,7 +57,7 @@ public class EndToEndAnalysisToolTest {
 
   @Test
   public void testExecution() throws Exception {
-    EndToEndAnalysisTool endToEndAnalysisTool = new EndToEndAnalysisTool(epochs, layerSize, topN, false, true, analyzerType, "target/"+resource+"-"+System.currentTimeMillis()+".zip");
+    EndToEndAnalysisTool endToEndAnalysisTool = new EndToEndAnalysisTool(epochs, layerSize, topN, false, true, false, analyzerType, null);
     InputStream inputStream = getClass().getResourceAsStream(resource);
     Feed feed = new JiraFeedReader().read(inputStream);
     endToEndAnalysisTool.analyze(feed);

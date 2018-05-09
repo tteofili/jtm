@@ -26,7 +26,7 @@ public class AnalysisUtils {
     String chunkerModel = "en-chunker.bin";
     return CustomAnalyzer.builder()
           .addCharFilter(HTMLStripCharFilterFactory.class)
-          .addCharFilter(PatternReplaceCharFilterFactory.class, "pattern", "[<>=\":/'()\\[\\],.*]", "replacement", " ")
+          .addCharFilter(PatternReplaceCharFilterFactory.class, "pattern", "[<>=\"\\:\\/\\'\\(\\)\\[\\]\\,\\.\\*\\&\\$\\%\\@]", "replacement", " ")
           .withTokenizer(OpenNLPTokenizerFactory.class, OpenNLPTokenizerFactory.SENTENCE_MODEL,
               sentenceModel, OpenNLPTokenizerFactory.TOKENIZER_MODEL, tokenizerModel)
           .addTokenFilter(LowerCaseFilterFactory.class)

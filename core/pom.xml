@@ -36,7 +36,7 @@
          | dependencies configuration
         -->
         <lucene.version>7.3.0</lucene.version>
-        <dl4j.version>0.9.1</dl4j.version>
+        <dl4j.version>1.0.0-alpha</dl4j.version>
         <opennlp.version>1.8.4</opennlp.version>
         <slf4j.version>1.7.25</slf4j.version>
     </properties>

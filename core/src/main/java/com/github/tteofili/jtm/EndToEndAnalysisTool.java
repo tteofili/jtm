@@ -18,15 +18,14 @@ package com.github.tteofili.jtm;
 import java.io.IOException;
 import java.util.Collection;
 
-import org.apache.lucene.analysis.Analyzer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.Issue;
 import com.github.tteofili.jtm.tm.EmbeddingsTopicModel;
 import com.github.tteofili.jtm.tm.TopicModel;
+import org.apache.lucene.analysis.Analyzer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Tool for analyzing Jira issues exported as XML by training and executing a topic model.
@@ -46,6 +45,8 @@ public class EndToEndAnalysisTool implements AnalysisTool {
 
   private final boolean includeComments;
 
+  private final boolean generateClusters;
+
   private final String analyzerType;
 
   private final String vectorsOutputFile;
@@ -55,6 +56,7 @@ public class EndToEndAnalysisTool implements AnalysisTool {
                               int topN,
                               boolean hierarchicalVectors,
                               boolean includeComments,
+                              boolean generateClusters,
                               String analyzerType,
                               String vectorsOutputFile) {
     this.epochs = epochs;
@@ -62,6 +64,7 @@ public class EndToEndAnalysisTool implements AnalysisTool {
     this.topN = topN;
     this.hierarchicalVectors = hierarchicalVectors;
     this.includeComments = includeComments;
+    this.generateClusters = generateClusters;
     this.analyzerType = analyzerType;
     this.vectorsOutputFile = vectorsOutputFile;
   }
@@ -86,7 +89,7 @@ public class EndToEndAnalysisTool implements AnalysisTool {
       throw new IllegalArgumentException("undefined Analyzer of type '" + analyzerType + "'");
     }
 
-    TopicModel topicModel = new EmbeddingsTopicModel(epochs, layerSize, hierarchicalVectors, includeComments, analyzer, vectorsOutputFile);
+    TopicModel topicModel = new EmbeddingsTopicModel(epochs, layerSize, hierarchicalVectors, includeComments, generateClusters, analyzer, vectorsOutputFile);
     topicModel.fit(issues);
 
     Topics topics = new Topics();
@@ -98,7 +101,7 @@ public class EndToEndAnalysisTool implements AnalysisTool {
             topicModel.extractTopics(topN, issue.getKey())
                       .parallelStream()
                       .forEach(topic -> {
-                          log.info("Topic '{}' extracted from issue '{}'", topic, issue.getTitle());
+                          log.debug("Topic '{}' extracted from issue '{}'", topic, issue.getTitle());
                           topics.add(topic, issue.getKey().getValue());
                       });
         });
