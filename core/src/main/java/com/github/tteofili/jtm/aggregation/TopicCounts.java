@@ -16,21 +16,34 @@
 package com.github.tteofili.jtm.aggregation;
 
 import java.util.Collection;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class Topics {
+public class TopicCounts {
 
-    private final TopicCounts topicCounts = new TopicCounts();
+    private final Map<String, TopicCount> counts = new ConcurrentHashMap<>();
+
+    public void add(Collection<String> topics) {
+      for (String t : topics) {
+        if (counts.containsKey(t)) {
+          counts.get(t).increment();
+        } else {
+          counts.put(t, new TopicCount(t));
+        }
+      }
+    }
 
     public void add(String topic, String issueId) {
-        topicCounts.add(topic, issueId);
+      counts.computeIfAbsent(topic, k -> new TopicCount(topic)).add(issueId);
     }
 
-    public Collection<TopicCount> asSortedTopicCounts() {
-        return topicCounts.asSortedTopics();
+    Collection<TopicCount> asSortedTopics() {
+      return new TreeSet<>(counts.values());
     }
 
-    public boolean isEmpty() {
-        return topicCounts.isEmpty();
+    boolean isEmpty() {
+      return counts.isEmpty();
     }
+  }
 
-}

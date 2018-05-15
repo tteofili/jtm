@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.TreeSet;
 
+import com.github.tteofili.jtm.aggregation.TopicCount;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
@@ -79,14 +80,14 @@ public class ElasticSearchTopicsIndexer implements TopicsIndexer {
 
         String type = "doc";
 
-        for (Entry<String, TreeSet<String>> entry : extractedTopics.entrySet()) {
+        for (TopicCount entry : extractedTopics.asSortedTopicCounts()) {
             XContentBuilder jsonBuilder = XContentFactory.jsonBuilder()
                             .startObject()
-                            .field("topic", entry.getKey())
-                            .array("issues", entry.getValue())
+                            .field("topic", entry.getTopic())
+                            .array("issues", entry.getIssues())
                             .endObject();
 
-            IndexResponse response = client.prepareIndex(indexName, type, entry.getKey())
+            IndexResponse response = client.prepareIndex(indexName, type, entry.getTopic())
               .setSource(jsonBuilder)
               .get();
             // TODO handle the result

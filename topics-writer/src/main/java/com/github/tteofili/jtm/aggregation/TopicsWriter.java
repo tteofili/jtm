@@ -16,8 +16,10 @@
 package com.github.tteofili.jtm.aggregation;
 
 import java.io.OutputStream;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import javax.json.Json;
 import javax.json.stream.JsonGenerator;
@@ -47,13 +49,14 @@ public class TopicsWriter {
 
         generator.writeStartArray();
 
-        topics.entrySet().forEach(entry -> {
+        Collection<TopicCount> topicCounts = topics.asSortedTopicCounts();
+        topicCounts.forEach(entry -> {
             generator.writeStartObject()
-                     .write("topic", entry.getKey())
-                     .write("occurrences", entry.getValue().size())
+                     .write("topic", entry.getTopic())
+                     .write("occurrences", entry.getCount().intValue())
                      .writeStartArray("issues");
 
-            entry.getValue().forEach(issue -> generator.write(issue));
+            entry.getIssues().forEach(generator::write);
 
             generator.writeEnd().writeEnd();
         });
