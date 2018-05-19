@@ -30,6 +30,10 @@ import com.github.tteofili.jtm.feed.utils.FeedUtils;
 
 import picocli.CommandLine.Command;
 
+/**
+ * Command use to merge multiple feeds into one.
+ * This command accepts export files (e.g. Jira XML export). In order to use a directory containing multiple exports use something like 'bin/jtm merge -r jira `ls -d /path/to/issues/*.* `'
+ */
 @Command(name = "merge", description = "Merges all the input feeds in a single one")
 public class MergeCommand extends AbstractCommand implements AnalysisTool {
 

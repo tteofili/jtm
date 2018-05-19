@@ -145,7 +145,7 @@ public class EmbeddingsTopicModel implements TopicModel {
     iterator.reset();
 
     if (hierarchicalVectors) {
-      Par2Hier par2Hier = new Par2Hier(issuesParagraphVectors, Par2HierUtils.Method.CLUSTER, 3);
+      Par2Hier par2Hier = new Par2Hier(issuesParagraphVectors, Par2Hier.Method.CLUSTER, 3);
       par2Hier.fit();
 
       log.info("par2hier model fit");

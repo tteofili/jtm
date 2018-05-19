@@ -73,13 +73,17 @@ public class EmbeddingsTopicModelTest {
     embeddingsTopicModel.fit(issues);
   }
 
-  @Ignore
   @Test
   public void testLoadFromFile() throws Exception {
-    String[] testStrings = new String[] {"tommaso teofili", "tommaso", "francesco mari", "frustration", "expectations", "wdyt", "wtf", "antonio sanso", "simo tripodi", "simone tropodi",
+    String[] testStrings = new String[] {
+        "[OAK-7162] Race condition on revisions head between compaction and scheduler could result in skipped commit",
+        "[LUCENE-8090] IndexWriter#flushNextBuffer can cause NPE",
+        "[OPENNLP-1185] Tokenizers should be able to output a new line token",
+        "[FOO-319] - Tests should always pass",
+        "[BAR-12931] - Code should have high coesion and low coupling",
     };
-    int topN = 20;
-    EmbeddingsTopicModel model = new EmbeddingsTopicModel(new File("target/issue-embeddings.zip"));
+    int topN = 3;
+    EmbeddingsTopicModel model = new EmbeddingsTopicModel(new File("src/test/resources/test.zip"));
     for (String ts : testStrings) {
       Collection<String> topics = model.extractTopics(topN, ts);
       System.out.println(ts + " -> " + topics);

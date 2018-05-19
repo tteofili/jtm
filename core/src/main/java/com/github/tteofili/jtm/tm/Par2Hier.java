@@ -17,12 +17,18 @@ package com.github.tteofili.jtm.tm;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.TreeMap;
 
+import com.github.tteofili.jtm.feed.Comment;
+import com.github.tteofili.jtm.feed.Issue;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.SingularValueDecomposition;
 import org.deeplearning4j.models.embeddings.WeightLookupTable;
 import org.deeplearning4j.models.embeddings.inmemory.InMemoryLookupTable;
 import org.deeplearning4j.models.embeddings.learning.SequenceLearningAlgorithm;
@@ -61,12 +67,12 @@ public class Par2Hier extends ParagraphVectors {
   protected INDArray labelsMatrix;
   protected List<VocabWord> labelsList = new ArrayList<>();
   protected boolean normalizedLabels = false;
-  private Par2HierUtils.Method smoothing;
+  private Method smoothing;
   private Integer k;
   private WeightLookupTable<VocabWord> lookupTable;
   private VocabCache<VocabWord> vocab;
 
-  Par2Hier(ParagraphVectors paragraphVectors, Par2HierUtils.Method smoothing, int k) {
+  Par2Hier(ParagraphVectors paragraphVectors, Method smoothing, int k) {
     this.smoothing = smoothing;
     this.k = k;
 
@@ -83,7 +89,7 @@ public class Par2Hier extends ParagraphVectors {
 
   }
 
-  public Par2Hier(ParagraphVectors issuesParagraphVectors, ParagraphVectors commentsParagraphVectors, Par2HierUtils.Method cluster, int k) {
+  public Par2Hier(ParagraphVectors issuesParagraphVectors, ParagraphVectors commentsParagraphVectors, Method cluster, int k) {
 
   }
 
@@ -360,7 +366,7 @@ public class Par2Hier extends ParagraphVectors {
       super.fit();
     }
 
-    Map<String, INDArray> hvs = Par2HierUtils.getPar2Hier(labelAwareIterator, lookupTable, labelsSource.getLabels(), k, smoothing);
+    Map<String, INDArray> hvs = getPar2Hier(labelAwareIterator, lookupTable, labelsSource.getLabels(), k, smoothing);
     for (Map.Entry<String, INDArray> entry : hvs.entrySet()) {
       lookupTable.putVector(entry.getKey(), entry.getValue());
     }
@@ -411,5 +417,106 @@ public class Par2Hier extends ParagraphVectors {
   @Override
   public VocabCache<VocabWord> getVocab() {
     return this.lookupTable.getVocabCache();
+  }
+
+  public enum Method {
+    CLUSTER,
+    SUM
+  }
+
+  /**
+   * transforms paragraph vectors into hierarchical vectors
+   * @param iterator iterator over docs
+   * @param lookupTable the paragraph vector table
+   * @param labels the labels
+   * @param k the no. of centroids
+   * @return a map doc->hierarchical vector
+   */
+  private static Map<String, INDArray> getPar2Hier(IssueIterator iterator,
+                                                   WeightLookupTable<VocabWord> lookupTable,
+                                                   List<String> labels, int k, Method method) {
+    Collections.sort(labels);
+    Collection<Issue> issues = iterator.getIssues();
+
+    Map<String, INDArray> hvs = new TreeMap<>();
+    // for each doc
+    for (Issue issue : issues) {
+      getPar2HierVector(lookupTable, issue, k, hvs, method);
+    }
+    return hvs;
+  }
+
+  /**
+   * base case: on a leaf hv = pv
+   * on a non-leaf node with n children: hv = pv + k centroids of the n hv
+   */
+  private static void getPar2HierVector(WeightLookupTable<VocabWord> lookupTable, Issue issue,
+                                        int k, Map<String, INDArray> hvs, Method method) {
+    if (hvs.containsKey(issue.getKey().getValue())) {
+      hvs.get(issue.getKey().getValue());
+      return;
+    }
+    INDArray hv = lookupTable.vector(issue.getKey().getValue());
+
+    List<Comment> comments = issue.getComments();
+    if (comments.size() == 0) {
+      // just the pv
+      hvs.put(issue.getKey().getValue(), hv);
+    } else {
+      INDArray chvs = Nd4j.zeros(comments.size(), hv.columns());
+      int i = 0;
+      for (Comment desc : comments) {
+        // child hierarchical vector
+        INDArray chv = lookupTable.vector(desc.getId());
+        chvs.putRow(i, chv);
+        i++;
+      }
+
+      double[][] centroids;
+      if (chvs.rows() > k) {
+        centroids = getTruncatedVT(chvs, k);
+      } else if (chvs.rows() == 1) {
+        centroids = getDoubles(chvs.getRow(0));
+      } else {
+        centroids = getTruncatedVT(chvs, 1);
+      }
+      switch (method) {
+        case CLUSTER:
+          INDArray matrix = Nd4j.zeros(centroids.length + 1, hv.columns());
+          matrix.putRow(0, hv);
+          for (int c = 0; c < centroids.length; c++) {
+            matrix.putRow(c + 1, Nd4j.create(centroids[c]));
+          }
+          hv = Nd4j.create(getTruncatedVT(matrix, 1));
+          break;
+        case SUM:
+          for (double[] centroid : centroids) {
+            hv.addi(Nd4j.create(centroid));
+          }
+          break;
+      }
+
+      hvs.put(issue.getKey().getValue(), hv);
+    }
+  }
+
+  private static double[][] getTruncatedVT(INDArray matrix, int k) {
+    double[][] data = getDoubles(matrix);
+
+    SingularValueDecomposition svd = new SingularValueDecomposition(MatrixUtils.createRealMatrix(data));
+
+    double[][] truncatedVT = new double[k][svd.getVT().getColumnDimension()];
+    svd.getVT().copySubMatrix(0, k - 1, 0, truncatedVT[0].length - 1, truncatedVT);
+    return truncatedVT;
+  }
+
+  private static double[][] getDoubles(INDArray matrix) {
+    double[][] data = new double[matrix.rows()][matrix.columns()];
+    for (int i = 0; i < data.length; i++) {
+      for (int j = 0; j < data[0].length; j++) {
+        data[i][j] = matrix.getDouble(i, j);
+      }
+    }
+    return data;
   }
 }
