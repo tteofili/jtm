@@ -30,11 +30,11 @@ import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.aggregation.TopicsWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
-@Command(name = "nearest")
+@Command(name = "nearest", sortOptions = true)
 public class NearestCommand implements Runnable {
 
     private static final Logger log = LoggerFactory.getLogger(NearestCommand.class);
@@ -51,7 +51,7 @@ public class NearestCommand implements Runnable {
     @Option( names = { "-o", "--output" }, description = "The directory where writing the extracted topics.")
     protected File outputDir = new File(System.getProperty("user.dir"));
 
-    @CommandLine.Parameters(index = "0", description = "Texts to analyse.", arity = "*")
+    @Parameters(index = "0", description = "Texts to analyse.", arity = "*", type = String.class)
     private String[] texts;
 
     private final TopicsWriter topicsWriter = new TopicsWriter();

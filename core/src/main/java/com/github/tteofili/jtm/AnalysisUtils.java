@@ -9,7 +9,6 @@ import org.apache.lucene.analysis.en.EnglishPossessiveFilterFactory;
 import org.apache.lucene.analysis.opennlp.OpenNLPChunkerFilterFactory;
 import org.apache.lucene.analysis.opennlp.OpenNLPPOSFilterFactory;
 import org.apache.lucene.analysis.opennlp.OpenNLPTokenizerFactory;
-import org.apache.lucene.analysis.pattern.PatternReplaceCharFilterFactory;
 import org.apache.lucene.analysis.pattern.PatternReplaceFilterFactory;
 import org.apache.lucene.analysis.standard.ClassicTokenizerFactory;
 
@@ -28,12 +27,12 @@ public class AnalysisUtils {
           .addCharFilter(HTMLStripCharFilterFactory.class)
           .withTokenizer(OpenNLPTokenizerFactory.class, OpenNLPTokenizerFactory.SENTENCE_MODEL,
               sentenceModel, OpenNLPTokenizerFactory.TOKENIZER_MODEL, tokenizerModel)
-          .addTokenFilter(LowerCaseFilterFactory.class)
-          .addTokenFilter(PatternReplaceFilterFactory.class, "pattern", revisionsPattern, "replacement", "", "replace", "all")
           .addTokenFilter(OpenNLPPOSFilterFactory.class, OpenNLPPOSFilterFactory.POS_TAGGER_MODEL, posModel)
           .addTokenFilter(OpenNLPChunkerFilterFactory.class, OpenNLPChunkerFilterFactory.CHUNKER_MODEL, chunkerModel)
           .addTokenFilter(TypeTokenFilterFactory.class, "types", "types.txt", "useWhitelist", "true")
-          .build();
+        .addTokenFilter(LowerCaseFilterFactory.class)
+        .addTokenFilter(PatternReplaceFilterFactory.class, "pattern", revisionsPattern, "replacement", "", "replace", "all")
+        .build();
 
   }
 

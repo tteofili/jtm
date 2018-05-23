@@ -26,10 +26,10 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 /**
- * Tests for {@link EndToEndAnalysisTool}
+ * Integration tests for {@link EndToEndAnalysisTool}
  */
 @RunWith(Parameterized.class)
-public class EndToEndAnalysisToolTest {
+public class EndToEndAnalysisToolIT {
 
   private final String resource;
   private final int epochs;
@@ -37,7 +37,7 @@ public class EndToEndAnalysisToolTest {
   private final int topN;
   private final String analyzerType;
 
-  public EndToEndAnalysisToolTest(String resource, int epochs, int layerSize, int topN, String analyzerType) {
+  public EndToEndAnalysisToolIT(String resource, int epochs, int layerSize, int topN, String analyzerType) {
     this.resource = resource;
     this.epochs = epochs;
     this.layerSize = layerSize;
@@ -49,15 +49,18 @@ public class EndToEndAnalysisToolTest {
   public static Collection<Object[]> data() {
     // resource, epochs, layerSize, topN, analyzerType
     return Arrays.asList(new Object[][] {
+        {"/opennlp-issues.xml", 2, 60, 3, "opennlp"},
         {"/opennlp-issues.xml", 2, 60, 3, "simple"},
+        {"/lucene-issues.xml", 2, 60, 3, "opennlp"},
         {"/lucene-issues.xml", 2, 60, 3, "simple"},
+        {"/oak-issues.xml", 2, 60, 3, "opennlp"},
         {"/oak-issues.xml", 2, 60, 3, "simple"},
     });
   }
 
   @Test
   public void testExecution() throws Exception {
-    EndToEndAnalysisTool endToEndAnalysisTool = new EndToEndAnalysisTool(epochs, layerSize, topN, false, true, false, analyzerType, null);
+    EndToEndAnalysisTool endToEndAnalysisTool = new EndToEndAnalysisTool(epochs, layerSize, topN, false, true, true, analyzerType, null);
     InputStream inputStream = getClass().getResourceAsStream(resource);
     Feed feed = new JiraFeedReader().read(inputStream);
     endToEndAnalysisTool.analyze(feed);

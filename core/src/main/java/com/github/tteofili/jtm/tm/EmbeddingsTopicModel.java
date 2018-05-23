@@ -21,13 +21,20 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import com.github.tteofili.jtm.AnalysisUtils;
 import com.github.tteofili.jtm.feed.Identifiable;
 import com.github.tteofili.jtm.feed.Issue;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.analysis.Analyzer;
 import org.deeplearning4j.clustering.cluster.Cluster;
@@ -38,6 +45,7 @@ import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.text.tokenization.tokenizerfactory.TokenizerFactory;
 import org.nd4j.linalg.api.ndarray.INDArray;
+import org.nd4j.linalg.ops.transforms.Transforms;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -158,16 +166,42 @@ public class EmbeddingsTopicModel implements TopicModel {
     if (generateClusters) {
       String distanceFunction = "cosinesimilarity";
       int topN = 10;
-      KMeansClustering kMeansClustering = KMeansClustering.setup(20, 1000, distanceFunction, true);
+      KMeansClustering kMeansClustering = KMeansClustering.setup(50, 100, distanceFunction, true);
 
       List<Point> points = Point.toPoints(paragraphVectors.getLookupTable().getWeights());
       ClusterSet clusterSet = kMeansClustering.applyTo(points);
 
       for (Cluster c : clusterSet.getClusters()) {
-        INDArray center = c.getCenter().getArray();
+        final INDArray center = c.getCenter().getArray();
         Collection<String> strings = getTopicsForVector(topN, center);
-        c.setLabel(strings.toString());
-        log.info("cluster: {}, size: {}", c.getLabel(), + c.getPoints().size());
+        log.info("cluster {} initial topics: {}", c.getId(), strings);
+
+        Comparator<? super String> comparator = (Comparator<String>) (o1, o2) -> {
+          INDArray vector1 = paragraphVectors.getLookupTable().vector(o1);
+          INDArray vector2 = paragraphVectors.getLookupTable().vector(o2);
+          return (int) (Transforms.cosineSim(center, vector1) - Transforms.cosineSim(center, vector2));
+        };
+        Map<String, Set<String>> topicCandidates = new HashMap<>();
+        for (String t : strings) {
+          topicCandidates.put(t, Sets.newHashSet(extractTopics(topN,t)));
+        }
+        Set<String> finalTopic = new TreeSet<>(comparator);
+        for (Set<String> s : topicCandidates.values()) {
+          if (finalTopic.isEmpty()) {
+            finalTopic = s;
+          } else {
+            finalTopic = Sets.intersection(finalTopic, s);
+          }
+        }
+
+        if (finalTopic.isEmpty()) {
+          c.setLabel(strings.toString());
+        } else {
+          c.setLabel(finalTopic.toString());
+        }
+
+        log.info("cluster {}: {} ({})", c.getId(), c.getLabel(), + c.getPoints().size());
+
       }
     }
 
@@ -184,28 +218,38 @@ public class EmbeddingsTopicModel implements TopicModel {
   }
 
   private Collection<String> getTopicsForVector(int topN, INDArray vector) {
+    Collection<String> result = Collections.emptyList();
     if (vector != null) {
-      Collection<String> nearestWords = paragraphVectors.wordsNearestSum(vector, topN);
+      try {
+        // nearest words
+        Collection<String> nearestWords = paragraphVectors.wordsNearestSum(vector, topN);
 
-      Collection<String> nearestLabelsWords = new LinkedList<>();
-      for (String label : paragraphVectors.nearestLabels(vector, topN)) {
-        INDArray nearestIssueVector = paragraphVectors.getLookupTable().vector(label);
-        nearestLabelsWords.addAll(paragraphVectors.wordsNearestSum(nearestIssueVector, topN));
-      }
-
-      nearestWords.addAll(nearestLabelsWords);
-
-      INDArray wordVectorsMean = paragraphVectors.getWordVectorsMean(nearestWords);
-      Collection<String> topics = paragraphVectors.wordsNearestSum(wordVectorsMean, topN);
-      for (String w : nearestWords) {
-        if (!topics.contains(w)) {
-          topics.add(w);
+        Collection<String> nearestLabelsWords = new LinkedList<>();
+        for (String label : paragraphVectors.nearestLabels(vector, topN)) {
+          INDArray nearestIssueVector = paragraphVectors.getLookupTable().vector(label);
+          nearestLabelsWords.addAll(paragraphVectors.wordsNearestSum(nearestIssueVector, topN));
         }
+
+        // nearest words of nearest neighbours
+        nearestWords.addAll(nearestLabelsWords);
+
+        // calculate average vector of nearest words
+        INDArray wordVectorsMean = paragraphVectors.getWordVectorsMean(nearestWords);
+
+        // nearest words of average vector
+        Collection<String> topics = paragraphVectors.wordsNearestSum(wordVectorsMean, topN);
+        for (String w : nearestWords) {
+          if (!topics.contains(w)) {
+            topics.add(w);
+          }
+        }
+        // TODO : sort topics by similarity ?
+        result = filterTopics(topics);
+      } catch (Throwable e) {
+        log.error("could not get topics", e);
       }
-      return filterTopics(topics);
-    } else {
-      return Collections.emptyList();
     }
+    return result;
   }
 
   @Override

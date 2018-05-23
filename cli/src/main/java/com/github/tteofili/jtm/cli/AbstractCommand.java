@@ -205,15 +205,7 @@ abstract class AbstractCommand implements Runnable {
 
         if ( status < 0 )
         {
-            if ( verbose )
-            {
-                log.error( "Execution terminated with errors", error );
-            }
-            else
-            {
-                log.error( "Execution terminated with errors: {}", error.getMessage() );
-            }
-
+            log.error( "Execution terminated with errors", error );
             log.info( "+-----------------------------------------------------+" );
         }
     }

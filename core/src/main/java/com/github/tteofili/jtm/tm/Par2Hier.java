@@ -89,10 +89,6 @@ public class Par2Hier extends ParagraphVectors {
 
   }
 
-  public Par2Hier(ParagraphVectors issuesParagraphVectors, ParagraphVectors commentsParagraphVectors, Method cluster, int k) {
-
-  }
-
   private static <T extends SequenceElement> WeightLookupTable<VocabWord> rebuildLookupTable(WeightLookupTable<T> parLT, VocabCache<VocabWord> vocabCache) {
     WeightLookupTable<VocabWord> lookupTable = new InMemoryLookupTable.Builder<VocabWord>()
         .vectorLength(parLT.layerSize()).cache(vocabCache).build();

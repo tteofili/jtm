@@ -37,7 +37,6 @@ public class IssueIterator implements LabelAwareIterator {
 
   private final Collection<Issue> issues;
   private final boolean includeComments;
-  private final List<Comment> commentsList;
 
   private Issue currentIssue;
   private Iterator<Issue> issuesIterator;
@@ -50,14 +49,12 @@ public class IssueIterator implements LabelAwareIterator {
   IssueIterator(Collection<Issue> issues, boolean includeComments) {
     this.issues = issues;
     this.includeComments = includeComments;
-    this.commentsList = new LinkedList<>();
     this.labelSource = extractLabels();
-    issuesIterator = issues.iterator();
+    this.issuesIterator = issues.iterator();
   }
 
   private LabelsSource extractLabels() {
     List<String> labels = new LinkedList<>();
-
     for (Issue issue : issues) {
       Identifiable key = issue.getKey();
       if (key != null) {
@@ -89,7 +86,6 @@ public class IssueIterator implements LabelAwareIterator {
     } else {
       currentIssue = issuesIterator.next();
       List<Comment> comments = currentIssue.getComments();
-      this.commentsList.addAll(comments);
       commentIterator = comments.iterator();
       Identifiable key = currentIssue.getKey();
       if (key != null) {
@@ -156,50 +152,4 @@ public class IssueIterator implements LabelAwareIterator {
     return issues;
   }
 
-  LabelAwareIterator commentsIterator() {
-    final Iterator<Comment> iterator = commentsList.iterator();
-    return new LabelAwareIterator() {
-
-      @Override
-      public boolean hasNextDocument() {
-        return iterator.hasNext();
-      }
-
-      @Override
-      public LabelledDocument nextDocument() {
-        Comment next = iterator.next();
-        LabelledDocument document = new LabelledDocument();
-        String id = next.getId();
-        labelSource.storeLabel(id);
-        document.setLabels(Collections.singletonList(id));
-        document.setContent(next.toString());
-        return document;
-      }
-
-      @Override
-      public void reset() {
-
-      }
-
-      @Override
-      public LabelsSource getLabelsSource() {
-        return labelSource;
-      }
-
-      @Override
-      public void shutdown() {
-
-      }
-
-      @Override
-      public boolean hasNext() {
-        return hasNextDocument();
-      }
-
-      @Override
-      public LabelledDocument next() {
-        return nextDocument();
-      }
-    };
-  }
 }
