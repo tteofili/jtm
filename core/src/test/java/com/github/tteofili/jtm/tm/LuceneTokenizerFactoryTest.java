@@ -41,6 +41,24 @@ public class LuceneTokenizerFactoryTest {
   }
 
   @Test
+  public void testShingleOpenNLPAnalyzer() throws Exception {
+    LuceneTokenizerFactory tokenizerFactory = new LuceneTokenizerFactory(AnalysisUtils.shingleOpenNLPAnalyzer());
+    for (String testString : testStrings) {
+      List<String> tokens = tokenizerFactory.create(testString).getTokens();
+      System.out.println(tokens);
+    }
+  }
+
+  @Test
+  public void testShingleSimpleAnalyzer() throws Exception {
+    LuceneTokenizerFactory tokenizerFactory = new LuceneTokenizerFactory(AnalysisUtils.shingleSimpleAnalyzer());
+    for (String testString : testStrings) {
+      List<String> tokens = tokenizerFactory.create(testString).getTokens();
+      System.out.println(tokens);
+    }
+  }
+
+  @Test
   public void testSimpleAnalyzer() throws Exception {
     LuceneTokenizerFactory tokenizerFactory = new LuceneTokenizerFactory(AnalysisUtils.simpleAnalyzer());
     for (String testString : testStrings) {

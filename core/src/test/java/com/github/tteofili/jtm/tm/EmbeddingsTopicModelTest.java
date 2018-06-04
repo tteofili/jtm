@@ -16,6 +16,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -89,6 +90,27 @@ public class EmbeddingsTopicModelTest {
       System.out.println(ts + " -> " + topics);
       assertNotNull(topics);
     }
+  }
+
+  @Test
+  public void testTopicFiltering() throws Exception {
+    EmbeddingsTopicModel embeddingsTopicModel = new EmbeddingsTopicModel(new File("src/test/resources/test.zip"));
+    Collection<String> topicsToFilter = new LinkedList<>();
+    topicsToFilter.add("on top");
+    topicsToFilter.add("that it can");
+    topicsToFilter.add("group and");
+    topicsToFilter.add("in time for");
+    topicsToFilter.add("is this");
+    topicsToFilter.add("fix request for");
+    topicsToFilter.add("before");
+    topicsToFilter.add("better");
+    topicsToFilter.add("nodes which have");
+    topicsToFilter.add("customer have");
+    topicsToFilter.add("c where");
+    topicsToFilter.add("needs to");
+    topicsToFilter.add("user to");
+    Collection<String> filterTopics = embeddingsTopicModel.filterTopics(topicsToFilter);
+    assertTrue(filterTopics.isEmpty());
   }
 
 }

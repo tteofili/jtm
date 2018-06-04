@@ -46,7 +46,7 @@ public class LuceneTokenizerFactory implements TokenizerFactory {
     }
   }
 
-  LuceneTokenizerFactory(Analyzer analyzer) {
+  public LuceneTokenizerFactory(Analyzer analyzer) {
     this.analyzer = analyzer;
   }
 

@@ -19,17 +19,20 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TopicCounts {
 
     private final Map<String, TopicCount> counts = new ConcurrentHashMap<>();
+
+    private final AtomicInteger occurrencesCount = new AtomicInteger();
 
     public void add(Collection<String> topics) {
       for (String t : topics) {
         if (counts.containsKey(t)) {
           counts.get(t).increment();
         } else {
-          counts.put(t, new TopicCount(t));
+          counts.put(t, new TopicCount(t, 1));
         }
       }
     }

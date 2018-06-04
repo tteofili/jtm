@@ -43,7 +43,7 @@ public class AnalyzeCommand extends AbstractCommand {
     private boolean generateClusters = false;
 
     @Option(names = {"-a", "--analyzer"}, description = "Analyzer.")
-    private String analyzerType = "opennlp";
+    private String analyzerType = "shingle-simple";
 
     @Option(names = {"-vo", "--vectors-output"}, description = "Vectors output file.")
     private String vectorsOutputFile = null;

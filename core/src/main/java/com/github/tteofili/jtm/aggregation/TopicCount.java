@@ -34,9 +34,13 @@ public class TopicCount implements Comparable<TopicCount> {
     private final Collection<String> issues = new ConcurrentArrayList<>();
 
 
-    TopicCount(String topic) {
+    TopicCount(String topic, int initialValue) {
       this.topic = topic;
-      this.count = new AtomicInteger(0);
+      this.count = new AtomicInteger(initialValue);
+    }
+
+    TopicCount(String topic) {
+      this(topic, 0);
     }
 
     void increment() {

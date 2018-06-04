@@ -85,6 +85,10 @@ public class EndToEndAnalysisTool implements AnalysisTool {
       analyzer = AnalysisUtils.openNLPAnalyzer();
     } else if ("simple".equalsIgnoreCase(analyzerType)) {
       analyzer = AnalysisUtils.simpleAnalyzer();
+    } else if ("shingle-simple".equalsIgnoreCase(analyzerType)) {
+      analyzer = AnalysisUtils.shingleSimpleAnalyzer();
+    } else if ("shingle-opennlp".equalsIgnoreCase(analyzerType)) {
+      analyzer = AnalysisUtils.shingleOpenNLPAnalyzer();
     } else {
       throw new IllegalArgumentException("undefined Analyzer of type '" + analyzerType + "'");
     }
@@ -99,13 +103,13 @@ public class EndToEndAnalysisTool implements AnalysisTool {
         .parallelStream()
         .forEach(issue -> {
             topicModel.extractTopics(topN, issue.getKey())
-                      .parallelStream()
                       .forEach(topic -> {
                           log.debug("Topic '{}' extracted from issue '{}'", topic, issue.getTitle());
                           topics.add(topic, issue.getKey().getValue());
                       });
         });
 
+    log.debug("Resulting topics : \n{}", topics.asSortedTopicCounts());
     return topics;
   }
 

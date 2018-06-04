@@ -23,7 +23,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +39,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.deeplearning4j.clustering.cluster.Cluster;
 import org.deeplearning4j.clustering.cluster.ClusterSet;
 import org.deeplearning4j.clustering.cluster.Point;
+import org.deeplearning4j.clustering.cluster.PointClassification;
 import org.deeplearning4j.clustering.kmeans.KMeansClustering;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
@@ -58,7 +58,7 @@ import opennlp.tools.postag.POSTaggerME;
  */
 public class EmbeddingsTopicModel implements TopicModel {
 
-  private static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD", "RB", "VBG"};
+  private static final String[] stopTags = new String[] {"TO", "WRB", "WDT", "VBP", "RBR", "PRP", "MD", "IN", "CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD", "RB", "VBG", "CC", "VBZ", "DT"};
 
   private static final Pattern pattern = Pattern.compile("\\w+-\\d+");
 
@@ -70,12 +70,12 @@ public class EmbeddingsTopicModel implements TopicModel {
   private final boolean includeComments;
   private final Analyzer analyzer;
   private final String vectorsOutputFile;
-
   private final POSTagger tagger;
-
   private final boolean generateClusters;
 
   private ParagraphVectors paragraphVectors;
+
+  private ClusterSet clusterSet = null;
 
   public EmbeddingsTopicModel(int epochs, int layerSize, boolean hierarchicalVectors,
                               boolean includeComments, boolean generateClusters, Analyzer analyzer,
@@ -110,9 +110,8 @@ public class EmbeddingsTopicModel implements TopicModel {
     this.tagger = new POSTaggerME(posModel);
 
     this.paragraphVectors = WordVectorSerializer.readParagraphVectors(file);
-    this.paragraphVectors.setTokenizerFactory(new LuceneTokenizerFactory());
-
     // TODO : move this into some configuration / builder object
+    this.paragraphVectors.setTokenizerFactory(new LuceneTokenizerFactory());
     this.layerSize = this.paragraphVectors.getLayerSize();
     this.hierarchicalVectors = false;
     this.includeComments = true;
@@ -127,7 +126,7 @@ public class EmbeddingsTopicModel implements TopicModel {
     Arrays.sort(stopTags);
   }
 
-  public void fit(Collection<Issue> issues) throws IOException {
+  public void fit(Collection<Issue> issues) {
 
     assert issues != null;
 
@@ -144,7 +143,7 @@ public class EmbeddingsTopicModel implements TopicModel {
         .tokenizerFactory(tf)
         .trainWordVectors(true)
         .useUnknown(true)
-        .minWordFrequency(5)
+        .minWordFrequency(3)
         .build();
     issuesParagraphVectors.fit();
 
@@ -166,15 +165,15 @@ public class EmbeddingsTopicModel implements TopicModel {
     if (generateClusters) {
       String distanceFunction = "cosinesimilarity";
       int topN = 10;
-      KMeansClustering kMeansClustering = KMeansClustering.setup(50, 100, distanceFunction, true);
+      KMeansClustering kMeansClustering = KMeansClustering.setup(30, 100, distanceFunction, true);
 
       List<Point> points = Point.toPoints(paragraphVectors.getLookupTable().getWeights());
-      ClusterSet clusterSet = kMeansClustering.applyTo(points);
+      clusterSet = kMeansClustering.applyTo(points);
 
       for (Cluster c : clusterSet.getClusters()) {
         final INDArray center = c.getCenter().getArray();
         Collection<String> strings = getTopicsForVector(topN, center);
-        log.info("cluster {} initial topics: {}", c.getId(), strings);
+        log.debug("cluster {} initial topics: {}", c.getId(), strings);
 
         Comparator<? super String> comparator = (Comparator<String>) (o1, o2) -> {
           INDArray vector1 = paragraphVectors.getLookupTable().vector(o1);
@@ -183,7 +182,7 @@ public class EmbeddingsTopicModel implements TopicModel {
         };
         Map<String, Set<String>> topicCandidates = new HashMap<>();
         for (String t : strings) {
-          topicCandidates.put(t, Sets.newHashSet(extractTopics(topN,t)));
+          topicCandidates.put(t, Sets.newHashSet(extractTopics(topN, t)));
         }
         Set<String> finalTopic = new TreeSet<>(comparator);
         for (Set<String> s : topicCandidates.values()) {
@@ -197,11 +196,10 @@ public class EmbeddingsTopicModel implements TopicModel {
         if (finalTopic.isEmpty()) {
           c.setLabel(strings.toString());
         } else {
+          log.debug("cluster {} has an intersection of common topics", c.getId());
           c.setLabel(finalTopic.toString());
         }
-
-        log.info("cluster {}: {} ({})", c.getId(), c.getLabel(), + c.getPoints().size());
-
+        log.info("cluster {}: {} ({})", c.getId(), c.getLabel(), c.getPoints().size());
       }
     }
 
@@ -214,30 +212,41 @@ public class EmbeddingsTopicModel implements TopicModel {
   @Override
   public Collection<String> extractTopics(int topN, Identifiable documentId) {
     INDArray issueVector = paragraphVectors.getLookupTable().vector(documentId.getValue());
-    return getTopicsForVector(topN, issueVector);
+    Collection<String> topicsForVector = getTopicsForVector(topN, issueVector);
+    log.debug("{} extracted for {}", topicsForVector, documentId);
+    return topicsForVector;
   }
 
   private Collection<String> getTopicsForVector(int topN, INDArray vector) {
+
+    if (clusterSet != null) {
+      List<Point> points = Point.toPoints(Collections.singletonList(vector));
+      PointClassification pointClassification = clusterSet.classifyPoint(points.get(0));
+      log.debug("vector classified as {}", pointClassification);
+      return Collections.singleton(pointClassification.getCluster().getLabel());
+    }
+
     Collection<String> result = Collections.emptyList();
     if (vector != null) {
       try {
         // nearest words
-        Collection<String> nearestWords = paragraphVectors.wordsNearestSum(vector, topN);
+        Collection<String> nearestWords = paragraphVectors.wordsNearest(vector, topN);
+        log.debug("nearest words {}", nearestWords);
 
+        // nearest words of nearest neighbours
         Collection<String> nearestLabelsWords = new LinkedList<>();
         for (String label : paragraphVectors.nearestLabels(vector, topN)) {
           INDArray nearestIssueVector = paragraphVectors.getLookupTable().vector(label);
-          nearestLabelsWords.addAll(paragraphVectors.wordsNearestSum(nearestIssueVector, topN));
+          nearestLabelsWords.addAll(paragraphVectors.wordsNearest(nearestIssueVector, topN));
         }
-
-        // nearest words of nearest neighbours
+        log.debug("nearest label words {} ", nearestLabelsWords);
         nearestWords.addAll(nearestLabelsWords);
 
         // calculate average vector of nearest words
         INDArray wordVectorsMean = paragraphVectors.getWordVectorsMean(nearestWords);
 
         // nearest words of average vector
-        Collection<String> topics = paragraphVectors.wordsNearestSum(wordVectorsMean, topN);
+        Collection<String> topics = paragraphVectors.wordsNearest(wordVectorsMean, topN);
         for (String w : nearestWords) {
           if (!topics.contains(w)) {
             topics.add(w);
@@ -255,20 +264,22 @@ public class EmbeddingsTopicModel implements TopicModel {
   @Override
   public Collection<String> extractTopics(int topN, String text) {
     try {
-      log.debug("{} nearest labels {}", text, paragraphVectors.nearestLabels(text, topN));
       List<String> tokens = paragraphVectors.getTokenizerFactory().create(text).getTokens();
       INDArray textVector = paragraphVectors.getWordVectorsMean(tokens);
-      return getTopicsForVector(topN, textVector);
+      Collection<String> topicsForVector = getTopicsForVector(topN, textVector);
+      log.debug("{} extracted for {}", topicsForVector, text);
+      return topicsForVector;
     } catch (Throwable t) {
       return Collections.emptySet();
     }
   }
 
-  private Collection<String> filterTopics(Collection<String> topics) {
+  Collection<String> filterTopics(Collection<String> topics) {
+    log.debug("topics {}", topics);
     Collection<String> toRemove = new LinkedList<>();
     for (String t : topics) {
       try {
-        String[] tags = tagger.tag(new String[] {t});
+        String[] tags = tagger.tag(t.split(" "));
         boolean stopTag = false;
         for (String tag : tags) {
           stopTag = Arrays.binarySearch(stopTags, tag) >= 0;
@@ -282,10 +293,11 @@ public class EmbeddingsTopicModel implements TopicModel {
           toRemove.add(t);
         }
       } catch (Throwable throwable) {
-        log.error("could not filter topic {}", t);
+        log.error("could not filter topic {} - {}", t, throwable.getLocalizedMessage());
       }
     }
     topics.removeAll(toRemove);
+    log.debug("filtered topics {}", topics);
     return topics;
   }
 

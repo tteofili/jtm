@@ -19,17 +19,21 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Collection;
 
+import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.feed.Feed;
 import com.github.tteofili.jtm.feed.jira.JiraFeedReader;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+
 /**
  * Integration tests for {@link EndToEndAnalysisTool}
  */
 @RunWith(Parameterized.class)
-public class EndToEndAnalysisToolIT {
+public class EndToEndAnalysisToolIntegrationTest {
 
   private final String resource;
   private final int epochs;
@@ -37,7 +41,7 @@ public class EndToEndAnalysisToolIT {
   private final int topN;
   private final String analyzerType;
 
-  public EndToEndAnalysisToolIT(String resource, int epochs, int layerSize, int topN, String analyzerType) {
+  public EndToEndAnalysisToolIntegrationTest(String resource, int epochs, int layerSize, int topN, String analyzerType) {
     this.resource = resource;
     this.epochs = epochs;
     this.layerSize = layerSize;
@@ -60,10 +64,12 @@ public class EndToEndAnalysisToolIT {
 
   @Test
   public void testExecution() throws Exception {
-    EndToEndAnalysisTool endToEndAnalysisTool = new EndToEndAnalysisTool(epochs, layerSize, topN, false, true, true, analyzerType, null);
+    EndToEndAnalysisTool endToEndAnalysisTool = new EndToEndAnalysisTool(epochs, layerSize, topN, false, true, false, analyzerType, null);
     InputStream inputStream = getClass().getResourceAsStream(resource);
     Feed feed = new JiraFeedReader().read(inputStream);
-    endToEndAnalysisTool.analyze(feed);
+    Topics topics = endToEndAnalysisTool.analyze(feed);
+    assertNotNull(topics);
+    assertFalse(topics.isEmpty());
     inputStream.close();
   }
 }
