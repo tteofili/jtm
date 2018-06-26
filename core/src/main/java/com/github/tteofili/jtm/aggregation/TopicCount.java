@@ -15,12 +15,14 @@
  */
 package com.github.tteofili.jtm.aggregation;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.threadly.concurrent.collections.ConcurrentArrayList;
 
-public class TopicCount implements Comparable<TopicCount> {
+public class TopicCount implements Comparable<TopicCount>, Serializable {
+
   public String getTopic() {
     return topic;
   }

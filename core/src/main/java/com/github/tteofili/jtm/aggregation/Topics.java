@@ -15,22 +15,37 @@
  */
 package com.github.tteofili.jtm.aggregation;
 
+import java.io.Serializable;
 import java.util.Collection;
 
-public class Topics {
+public class Topics implements Serializable {
 
-    private final TopicCounts topicCounts = new TopicCounts();
+  private final TopicCounts topicCounts = new TopicCounts();
 
-    public void add(String topic, String issueId) {
-        topicCounts.add(topic, issueId);
+  public void add(String topic, String issueId) {
+    topicCounts.add(topic, issueId);
+  }
+
+  public Collection<TopicCount> asSortedTopicCounts() {
+    return topicCounts.asSortedTopics();
+  }
+
+  public boolean isEmpty() {
+    return topicCounts.isEmpty();
+  }
+
+  @Override
+  public String toString() {
+    return "Topics{" +
+        "topicCounts=" + topicCounts +
+        '}';
+  }
+
+  public void addAll(Topics topics) {
+    for (TopicCount tc : topics.asSortedTopicCounts()) {
+      for (String i : tc.getIssues()) {
+        this.topicCounts.add(tc.getTopic(), i);
+      }
     }
-
-    public Collection<TopicCount> asSortedTopicCounts() {
-        return topicCounts.asSortedTopics();
-    }
-
-    public boolean isEmpty() {
-        return topicCounts.isEmpty();
-    }
-
+  }
 }

@@ -38,7 +38,7 @@
         <lucene.version>7.3.1</lucene.version>
         <dl4j.version>1.0.0-beta</dl4j.version>
         <opennlp.version>1.8.4</opennlp.version>
-        <flink.version>1.3.2</flink.version>
+        <flink.version>1.4.2</flink.version>
         <scala.version>2.11</scala.version>
         <slf4j.version>1.7.25</slf4j.version>
     </properties>
@@ -152,6 +152,12 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>jira-reader</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 

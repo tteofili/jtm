@@ -24,6 +24,7 @@ import java.util.LinkedList;
 import com.github.tteofili.jtm.EndToEndAnalysisTool;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -87,8 +88,10 @@ public class TopicModelPipeline implements AnalysisTool {
     ChunkerModel chunkerModel = new ChunkerModel(chunkerStream);
 
     final StreamExecutionEnvironment env =
-        StreamExecutionEnvironment.getExecutionEnvironment();
+        StreamExecutionEnvironment.getExecutionEnvironment().setParallelism(1);
 
+    env.getConfig().enableObjectReuse();
+    env.setStreamTimeCharacteristic(TimeCharacteristic.IngestionTime);
     env.getConfig().registerTypeWithKryoSerializer(CASImpl.class, KryoCasSerializer.class);
 
     DataStreamSource<Issue> jiraIssueDataStreamSource = env.fromCollection(feed.getIssues().getIssues());
@@ -104,8 +107,12 @@ public class TopicModelPipeline implements AnalysisTool {
                                                 issue.getDescription(),
                                                 issue.getSummary());
       cas.setDocumentText(documentText);
+      cas.setDocumentLanguage(issue.getKey().getValue());
+//      cas.setSofaDataString(issue.getKey().getValue(), null);
       return cas;
     });
+
+    Topics finalTopics = new Topics();
 
     RichAllWindowFunction<CAS, Embeddings, GlobalWindow> f = new RichAllWindowFunction<CAS, Embeddings, GlobalWindow>() {
       @Override
@@ -209,7 +216,7 @@ public class TopicModelPipeline implements AnalysisTool {
 
             Topics topics = new Topics();
             for (CAS cas : value.values) {
-              String key = cas.toString();
+              String key = cas.getDocumentLanguage();
               INDArray issueVector;
               try {
                 issueVector = paragraphVectors.getLookupTable().vector(key);
@@ -242,15 +249,17 @@ public class TopicModelPipeline implements AnalysisTool {
               extractedTopics.removeAll(toRemove);
 
               // TODO how to link issue to topics, here?
-              //topics.add(extractedTopics);
+              for (String t : extractedTopics) {
+                topics.add(t, key);
+                finalTopics.add(t, key);
+              }
             }
-
             return topics;
           }
         }).print();
 
     env.execute();
-    return null;
+    return finalTopics;
   }
 
   @Override

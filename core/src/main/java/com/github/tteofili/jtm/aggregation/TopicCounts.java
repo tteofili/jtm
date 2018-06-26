@@ -15,38 +15,44 @@
  */
 package com.github.tteofili.jtm.aggregation;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TopicCounts {
+public class TopicCounts implements Serializable {
 
-    private final Map<String, TopicCount> counts = new ConcurrentHashMap<>();
+  private final Map<String, TopicCount> counts = new ConcurrentHashMap<>();
 
-    private final AtomicInteger occurrencesCount = new AtomicInteger();
+  private final AtomicInteger occurrencesCount = new AtomicInteger();
 
-    public void add(Collection<String> topics) {
-      for (String t : topics) {
-        if (counts.containsKey(t)) {
-          counts.get(t).increment();
-        } else {
-          counts.put(t, new TopicCount(t, 1));
-        }
+  public void add(Collection<String> topics) {
+    for (String t : topics) {
+      if (counts.containsKey(t)) {
+        counts.get(t).increment();
+      } else {
+        counts.put(t, new TopicCount(t, 1));
       }
     }
-
-    public void add(String topic, String issueId) {
-      counts.computeIfAbsent(topic, k -> new TopicCount(topic)).add(issueId);
-    }
-
-    Collection<TopicCount> asSortedTopics() {
-      return new TreeSet<>(counts.values());
-    }
-
-    boolean isEmpty() {
-      return counts.isEmpty();
-    }
   }
+
+  public void add(String topic, String issueId) {
+    counts.computeIfAbsent(topic, k -> new TopicCount(topic)).add(issueId);
+  }
+
+  Collection<TopicCount> asSortedTopics() {
+    return new TreeSet<>(counts.values());
+  }
+
+  boolean isEmpty() {
+    return counts.isEmpty();
+  }
+
+  @Override
+  public String toString() {
+    return "TopicCounts{" + asSortedTopics() + '}';
+  }
+}
 
