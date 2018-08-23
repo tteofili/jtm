@@ -60,7 +60,7 @@ public class StreamingIssuesTMPipeline {
 
     env.getConfig().registerTypeWithKryoSerializer(CASImpl.class, KryoCasSerializer.class);
 
-    DataStreamSource<Issue> jiraIssueDataStreamSource = env.fromCollection(feed.getIssues().getIssues()).setParallelism(1);
+    DataStreamSource<Issue> jiraIssueDataStreamSource = env.fromCollection(feed.getIssues().getIssues());
 
     // create stream on CAS
     DataStream<CAS> casStream = jiraIssueDataStreamSource.map(new CASCreationFunction());
