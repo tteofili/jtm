@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Tommaso Teofili
+ * Copyright 2018 Tommaso Teofili and Simone Tripodi
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package com.github.tteofili.jtm.pipeline;
 import org.apache.uima.cas.CAS;
 
 /**
- *
+ * A model chunk contains the path to a batch of CASes and the paragraph vectors trained over the CAS text.
  */
 public class ModelDataChunk {
 

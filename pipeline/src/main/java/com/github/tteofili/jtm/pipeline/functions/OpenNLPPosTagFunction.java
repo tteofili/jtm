@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Tommaso Teofili
+ * Copyright 2018 Tommaso Teofili and Simone Tripodi
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import static com.github.tteofili.jtm.pipeline.StreamingIssuesTMPipeline.POS_FEA
 import static com.github.tteofili.jtm.pipeline.StreamingIssuesTMPipeline.TOKEN_TYPE;
 
 /**
- *
+ * PoS tag function
  */
 public class OpenNLPPosTagFunction extends RichMapFunction<CAS, CAS> {
 

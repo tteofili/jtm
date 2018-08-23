@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Tommaso Teofili
+ * Copyright 2018 Tommaso Teofili and Simone Tripodi
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import static com.github.tteofili.jtm.pipeline.StreamingIssuesTMPipeline.TOKEN_T
 
 
 /**
- *
+ * Tokenize function
  */
 public class OpenNLPTokenizeFunction extends RichMapFunction<CAS, CAS> {
 
