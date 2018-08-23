@@ -35,10 +35,10 @@
         <!--
          | dependencies configuration
         -->
-        <lucene.version>7.3.1</lucene.version>
+        <lucene.version>7.4.0</lucene.version>
         <dl4j.version>1.0.0-beta</dl4j.version>
-        <opennlp.version>1.8.4</opennlp.version>
-        <flink.version>1.4.2</flink.version>
+        <opennlp.version>1.9.0</opennlp.version>
+        <flink.version>1.6.0</flink.version>
         <scala.version>2.11</scala.version>
         <slf4j.version>1.7.25</slf4j.version>
     </properties>
@@ -49,10 +49,19 @@
             <artifactId>issue-model</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>jtm-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>jtm-topics-writer</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>jira-reader</artifactId>
             <version>${project.version}</version>
         </dependency>
 
@@ -98,11 +107,11 @@
             </exclusions>
         </dependency>
 
-        <!--<dependency>-->
-            <!--<groupId>org.apache.lucene</groupId>-->
-            <!--<artifactId>lucene-analyzers-opennlp</artifactId>-->
-            <!--<version>${lucene.version}</version>-->
-        <!--</dependency>-->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-opennlp</artifactId>
+            <version>${lucene.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.lucene</groupId>
@@ -152,12 +161,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>jira-reader</artifactId>
-            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 

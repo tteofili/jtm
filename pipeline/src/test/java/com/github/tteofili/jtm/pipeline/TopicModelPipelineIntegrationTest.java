@@ -15,14 +15,10 @@
  */
 package com.github.tteofili.jtm.pipeline;
 
-import java.io.InputStream;
+import java.io.File;
+import java.net.URL;
 
-import com.github.tteofili.jtm.aggregation.Topics;
-import com.github.tteofili.jtm.feed.Feed;
-import com.github.tteofili.jtm.feed.jira.JiraFeedReader;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  *
@@ -30,13 +26,9 @@ import static org.junit.Assert.*;
 public class TopicModelPipelineIntegrationTest {
 
   @Test
-  public void testAnalysis() throws Exception {
-    TopicModelPipeline topicModelPipeline = new TopicModelPipeline();
-    InputStream inputStream = getClass().getResourceAsStream("/opennlp-issues.xml");
-    Feed feed = new JiraFeedReader().read(inputStream);
-    Topics topics = topicModelPipeline.analyze(feed);
-    assertNotNull(topics);
-    assertNotNull(topics.asSortedTopicCounts());
-    assertFalse(topics.asSortedTopicCounts().isEmpty());
+  public void testIssueAnalysis() throws Exception {
+    URL url = getClass().getResource("/opennlp-issues.xml");
+    File f = new File(url.toURI());
+    StreamingIssuesTMPipeline.main(new String[] {f.getAbsolutePath()});
   }
 }

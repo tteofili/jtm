@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Tommaso Teofili and Simone Tripodi
+ * Copyright 2018 Tommaso Teofili
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -15,6 +15,6 @@
  */
 
 /**
- * Pipeline JTM APIs definition and implementation.
+ * Flink package for Topic modelling over Jira issues
  */
 package com.github.tteofili.jtm.pipeline;
