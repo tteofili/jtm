@@ -20,11 +20,15 @@ import java.util.Iterator;
 
 import com.github.tteofili.jtm.pipeline.utils.UimaUtil;
 import org.apache.uima.cas.CAS;
+import org.apache.uima.cas.Feature;
+import org.apache.uima.cas.Type;
 import org.apache.uima.cas.text.AnnotationFS;
 import org.apache.uima.cas.text.AnnotationIndex;
 import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
 import org.deeplearning4j.text.documentiterator.LabelledDocument;
 import org.deeplearning4j.text.documentiterator.LabelsSource;
+
+import static com.github.tteofili.jtm.pipeline.StreamingIssuesTMPipeline.CHUNK_FEATURE_NAME;
 
 /**
  * {@link LabelAwareIterator} for CAS
@@ -55,13 +59,18 @@ public class CASLabelAwareIterator implements LabelAwareIterator {
     CAS cas = iterator.next();
     LabelledDocument document = new LabelledDocument();
     document.setLabels(Collections.singletonList(UimaUtil.getIssueId(cas)));
-    AnnotationIndex<AnnotationFS> annotationIndex = cas.getAnnotationIndex(cas.getTypeSystem().getType(type));
+    Type annotationType = cas.getTypeSystem().getType(type);
+    Feature mChunkFeature = annotationType.getFeatureByBaseName(CHUNK_FEATURE_NAME);
+    AnnotationIndex<AnnotationFS> annotationIndex = cas.getAnnotationIndex(annotationType);
     StringBuilder text = new StringBuilder();
     for (AnnotationFS annotationFS : annotationIndex) {
-      if (text.length() > 0) {
-        text.append(' ');
+      String chunkType = annotationFS.getFeatureValueAsString(mChunkFeature);
+      if ("NP".equals(chunkType)) {
+        if (text.length() > 0) {
+          text.append(' ');
+        }
+        text.append(annotationFS.getCoveredText());
       }
-      text.append(annotationFS.getCoveredText());
     }
     document.setContent(text.toString());
 

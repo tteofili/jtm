@@ -42,7 +42,8 @@ public class CASCreationFunction extends RichMapFunction<Issue, CAS> {
 
     CAS cas = UimaUtil.createEmptyCAS(typeSystemDesc);
     UimaUtil.setIssueId(cas, issue);
-    String documentText = Joiner.on(' ').join(issue.getTitle(),
+    String documentText = Joiner.on(' ').join(
+        issue.getTitle(),
         issue.getDescription(),
         issue.getSummary()
     );

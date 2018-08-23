@@ -20,6 +20,8 @@ import java.security.SecureRandom;
 import java.util.Iterator;
 
 import com.github.tteofili.jtm.pipeline.ModelDataChunk;
+import com.github.tteofili.jtm.tm.LuceneTokenizerFactory;
+import com.google.common.io.Files;
 import org.apache.flink.streaming.api.functions.windowing.RichAllWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 import org.apache.flink.util.Collector;
@@ -31,7 +33,6 @@ import org.deeplearning4j.models.sequencevectors.sequence.Sequence;
 import org.deeplearning4j.models.sequencevectors.transformers.impl.SentenceTransformer;
 import org.deeplearning4j.models.word2vec.VocabWord;
 import org.deeplearning4j.text.documentiterator.LabelAwareIterator;
-import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 
 import static com.github.tteofili.jtm.pipeline.StreamingIssuesTMPipeline.CHUNK_TYPE;
 
@@ -43,7 +44,7 @@ public class UpdateEmbeddingsFunction extends RichAllWindowFunction<CAS, ModelDa
 
   private final SecureRandom random = new SecureRandom();
 
-  private static final String prefix = "/Users/teofili/Desktop/tm/";
+  private static final String prefix = Files.createTempDir().getAbsolutePath();
   static final String PV_PATH = prefix + "pv";
 
   @Override
@@ -51,8 +52,8 @@ public class UpdateEmbeddingsFunction extends RichAllWindowFunction<CAS, ModelDa
 
     LabelAwareIterator iterator = new CASLabelAwareIterator(values, CHUNK_TYPE);
 
-    int epochs = 1;
-    int layerSize = 60;
+    int epochs = 3;
+    int layerSize = 500;
 
     // fetch previously trained embeddings from file system
     ParagraphVectors oldPV = null;
@@ -67,7 +68,7 @@ public class UpdateEmbeddingsFunction extends RichAllWindowFunction<CAS, ModelDa
     if (oldPV != null) {
       oldPV.setLabelAwareIterator(iterator);
       SentenceTransformer transformer = new SentenceTransformer.Builder()
-          .iterator(iterator).tokenizerFactory(new DefaultTokenizerFactory()).build();
+          .iterator(iterator).tokenizerFactory(new LuceneTokenizerFactory()).build();
       Iterator<Sequence<VocabWord>> seqIterator = transformer.iterator();
       SequenceIterator<VocabWord> sequenceIterator = new SequenceIterator<VocabWord>() {
         @Override
@@ -87,7 +88,7 @@ public class UpdateEmbeddingsFunction extends RichAllWindowFunction<CAS, ModelDa
       };
 
       oldPV.setSequenceIterator(sequenceIterator);
-      oldPV.setTokenizerFactory(new DefaultTokenizerFactory());
+      oldPV.setTokenizerFactory(new LuceneTokenizerFactory());
       oldPV.fit();
       paragraphVectors = oldPV;
     } else {
@@ -95,7 +96,7 @@ public class UpdateEmbeddingsFunction extends RichAllWindowFunction<CAS, ModelDa
           .iterate(iterator)
           .epochs(epochs)
           .layerSize(layerSize)
-          .tokenizerFactory(new DefaultTokenizerFactory())
+          .tokenizerFactory(new LuceneTokenizerFactory())
           .useUnknown(true)
           .trainWordVectors(true)
           .build();

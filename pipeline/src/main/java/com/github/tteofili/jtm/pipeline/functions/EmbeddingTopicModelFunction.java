@@ -24,13 +24,13 @@ import com.github.tteofili.jtm.aggregation.Topics;
 import com.github.tteofili.jtm.pipeline.ModelDataChunk;
 import com.github.tteofili.jtm.pipeline.StreamingIssuesTMPipeline;
 import com.github.tteofili.jtm.pipeline.utils.UimaUtil;
+import com.github.tteofili.jtm.tm.LuceneTokenizerFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.api.common.functions.RichMapFunction;
 import org.apache.flink.configuration.Configuration;
 import org.apache.uima.cas.CAS;
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
-import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.nd4j.linalg.api.ndarray.INDArray;
 
 import opennlp.tools.postag.POSModel;
@@ -58,7 +58,7 @@ public class EmbeddingTopicModelFunction extends RichMapFunction<ModelDataChunk,
     POSTaggerME tagger = new POSTaggerME(posModel);
     int topN = 3;
     ParagraphVectors paragraphVectors = WordVectorSerializer.readParagraphVectors(modelDataChunk.getPathToParagraphVectors());
-    paragraphVectors.setTokenizerFactory(new DefaultTokenizerFactory());
+    paragraphVectors.setTokenizerFactory(new LuceneTokenizerFactory());
 
     Topics topics = new Topics();
     for (CAS cas : modelDataChunk.getValues()) {

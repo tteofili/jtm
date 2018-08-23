@@ -43,6 +43,7 @@ public class StreamingIssuesTMPipeline {
   public static final String TOKEN_TYPE = "opennlp.uima.Token";
   public static final String CHUNK_TYPE = "opennlp.uima.Chunk";
   public static final String POS_FEATURE_NAME = "pos";
+  public static final String CHUNK_FEATURE_NAME = "chunkType";
   public static final String[] stopTags = new String[] {"CD", "VB", "RB", "JJ", "VBN", "VBG", ".", "JJS", "FW", "VBD"};
 
   public static void main(String[] args) throws Exception {
@@ -69,7 +70,7 @@ public class StreamingIssuesTMPipeline {
         .map(new OpenNLPTokenizeFunction())
         .map(new OpenNLPPosTagFunction())
         .map(new OpenNLPChunkFunction())
-        .countWindowAll(50).apply(new UpdateEmbeddingsFunction())
+        .countWindowAll(100).apply(new UpdateEmbeddingsFunction())
         .countWindowAll(2).apply(new AverageEmbeddingsFunction())
         .map(new EmbeddingTopicModelFunction()).addSink(new TopicsWriterFunction());
 

@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 
 import com.github.tteofili.jtm.pipeline.ModelDataChunk;
+import com.github.tteofili.jtm.tm.LuceneTokenizerFactory;
 import com.google.common.collect.Iterables;
 import org.apache.flink.streaming.api.functions.windowing.AllWindowFunction;
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
@@ -30,7 +31,6 @@ import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer;
 import org.deeplearning4j.models.paragraphvectors.ParagraphVectors;
 import org.deeplearning4j.models.word2vec.VocabWord;
 import org.deeplearning4j.models.word2vec.wordstore.VocabCache;
-import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory;
 import org.nd4j.linalg.api.ndarray.INDArray;
 import org.nd4j.linalg.factory.Nd4j;
 import org.slf4j.Logger;
@@ -58,7 +58,7 @@ public class AverageEmbeddingsFunction implements AllWindowFunction<ModelDataChu
       ParagraphVectors current = WordVectorSerializer.readParagraphVectors(pathToParagraphVectors);
       if (paragraphVectors == null) {
         paragraphVectors = current;
-        paragraphVectors.setTokenizerFactory(new DefaultTokenizerFactory());
+        paragraphVectors.setTokenizerFactory(new LuceneTokenizerFactory());
       } else {
         averageModels(paragraphVectors, current);
       }
