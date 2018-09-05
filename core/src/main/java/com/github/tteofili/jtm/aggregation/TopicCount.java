@@ -32,39 +32,39 @@ public class TopicCount implements Comparable<TopicCount>, Serializable {
   }
 
   private final String topic;
-    private AtomicInteger count;
-    private final Collection<String> issues = new ConcurrentArrayList<>();
+  private AtomicInteger count;
+  private final Collection<String> issues = new ConcurrentArrayList<>();
 
 
-    TopicCount(String topic, int initialValue) {
-      this.topic = topic;
-      this.count = new AtomicInteger(initialValue);
-    }
-
-    TopicCount(String topic) {
-      this(topic, 0);
-    }
-
-    void increment() {
-      this.count.incrementAndGet();
-    }
-
-    @Override
-    public int compareTo(TopicCount o) {
-      return o.count.intValue() - this.count.intValue();
-    }
-
-    @Override
-    public String toString() {
-      return topic + " : " + count + issues;
-    }
-
-    public void add(String issueId) {
-      this.issues.add(issueId);
-      this.increment();
-    }
-
-    public Collection<String> getIssues() {
-      return issues;
-    }
+  TopicCount(String topic, int initialValue) {
+    this.topic = topic;
+    this.count = new AtomicInteger(initialValue);
   }
+
+  TopicCount(String topic) {
+    this(topic, 0);
+  }
+
+  void increment() {
+    this.count.incrementAndGet();
+  }
+
+  @Override
+  public int compareTo(TopicCount o) {
+    return o.count.intValue() - this.count.intValue();
+  }
+
+  @Override
+  public String toString() {
+    return topic + " : " + count + issues;
+  }
+
+  public void add(String issueId) {
+    this.issues.add(issueId);
+    this.increment();
+  }
+
+  public Collection<String> getIssues() {
+    return issues;
+  }
+}

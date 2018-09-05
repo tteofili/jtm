@@ -52,18 +52,6 @@
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>jtm-pipeline</artifactId>
-            <version>${project.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.flink</groupId>
-                    <artifactId>flink-runtime_2.11</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>${project.groupId}</groupId>
             <artifactId>jtm-topics-writer</artifactId>
             <version>${project.version}</version>
         </dependency>

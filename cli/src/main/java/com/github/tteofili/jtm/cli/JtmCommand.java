@@ -28,7 +28,7 @@ import picocli.CommandLine.Option;
     descriptionHeading = "Tool for analyzing Atlassian Jira issues exported to the XML feed format\n",
     description = "This tool does topic modelling based on word2vec and paragraph vectors",
     versionProvider = JtmVersionProvider.class,
-    subcommands = { AnalyzeCommand.class, MergeCommand.class, PipelineCommand.class, NearestCommand.class },
+    subcommands = { AnalyzeCommand.class, MergeCommand.class, NearestCommand.class },
     separator = " ",
     sortOptions = true
 )
